@@ -1,6 +1,6 @@
 # Smart Campus Operations Hub
 
-Production-style monorepo: **Spring Boot 3** (JWT, JPA, layered architecture) + **React** (Vite, Tailwind, Axios, React Router).
+PUF Project — production-style monorepo: **Spring Boot 3** (JWT, JPA, layered architecture) + **React** (Vite, Tailwind, Axios, React Router).
 
 ## Prerequisites
 
