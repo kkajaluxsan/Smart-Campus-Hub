@@ -1,0 +1,99 @@
+### Variables (set in your client)
+@host = http://localhost:8080
+@token = {{login.response.body.token}}
+
+### Register
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "demo@example.com",
+  "password": "secret12",
+  "fullName": "Demo User"
+}
+
+### Login
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@campus.edu",
+  "password": "user123"
+}
+
+### List resources
+GET {{host}}/api/resources
+Authorization: Bearer {{token}}
+
+### List resources — filter
+GET {{host}}/api/resources?type=AUDITORIUM&minCapacity=50
+Authorization: Bearer {{token}}
+
+### Seat availability (auditorium id from seed)
+GET {{host}}/api/resources/3/seats/availability?start=2026-01-15T10:00:00&end=2026-01-15T12:00:00
+Authorization: Bearer {{token}}
+
+### Create booking (room — use resource id 1 for Seminar Room)
+POST {{host}}/api/bookings
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "resourceId": 1,
+  "startTime": "2026-06-01T09:00:00",
+  "endTime": "2026-06-01T11:00:00",
+  "purpose": "Study session",
+  "attendees": 8
+}
+
+### Create booking (auditorium — replace seatIds with ids from availability response)
+POST {{host}}/api/bookings
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "resourceId": 3,
+  "startTime": "2026-06-01T14:00:00",
+  "endTime": "2026-06-01T16:00:00",
+  "purpose": "Guest lecture",
+  "attendees": 2,
+  "seatIds": [1, 2]
+}
+
+### Approve booking
+PUT {{host}}/api/bookings/1/approve
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "reason": "Approved for campus event"
+}
+
+### Reject booking
+PUT {{host}}/api/bookings/1/reject
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "reason": "Room reserved for maintenance"
+}
+
+### Tickets
+POST {{host}}/api/tickets
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "resourceId": 1,
+  "description": "Projector flickering",
+  "priority": "HIGH"
+}
+
+### Notifications
+GET {{host}}/api/notifications
+Authorization: Bearer {{token}}
+
+### Audit logs
+GET {{host}}/api/admin/audit-logs
+Authorization: Bearer {{token}}

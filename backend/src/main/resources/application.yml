@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: smart-campus-hub
+  datasource:
+    url: jdbc:h2:mem:campushub;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 15MB
+
+# Switch to PostgreSQL for production (see README)
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/campushub
+#    username: campus
+#    password: campus
+#    driver-class-name: org.postgresql.Driver
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
+    expiration-ms: 86400000
+  upload:
+    dir: ${user.home}/campus-hub-uploads
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.campus.hub: INFO
