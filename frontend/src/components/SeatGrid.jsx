@@ -1,7 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import Button from './ui/Button';
 
 /** seats: { id, seatLabel, availability }[] — availability: AVAILABLE | BOOKED */
 export default function SeatGrid({ seats, selectedIds, onToggle }) {
+  const [zoom, setZoom] = useState(1);
+
   const rows = useMemo(() => {
     const map = new Map();
     seats.forEach((s) => {
@@ -14,52 +17,78 @@ export default function SeatGrid({ seats, selectedIds, onToggle }) {
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [seats]);
 
+  const pickBestAvailable = () => {
+    const first = seats.find((s) => s.availability !== 'BOOKED');
+    if (first && !selectedIds.includes(first.id)) onToggle(first.id);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-4 text-xs text-slate-400">
-        <span className="flex items-center gap-2">
-          <span className="h-4 w-4 rounded bg-emerald-500/80 shadow seat-btn" /> Available
-        </span>
-        <span className="flex items-center gap-2">
-          <span className="h-4 w-4 rounded bg-red-600/90 shadow" /> Booked
-        </span>
-        <span className="flex items-center gap-2">
-          <span className="h-4 w-4 rounded bg-amber-400 shadow" /> Selected
-        </span>
-      </div>
-      {rows.map(([rowKey, rowSeats]) => (
-        <div key={rowKey} className="flex flex-wrap items-center gap-2">
-          <span className="w-8 text-slate-500 text-sm font-mono">{rowKey}</span>
-          <div className="flex flex-wrap gap-2">
-            {rowSeats.map((s) => {
-              const booked = s.availability === 'BOOKED';
-              const selected = selectedIds.includes(s.id);
-              let cls =
-                'seat-btn min-w-[2.75rem] h-9 px-2 border ';
-              if (booked) {
-                cls += 'bg-red-900/60 border-red-700 text-red-200 cursor-not-allowed opacity-80';
-              } else if (selected) {
-                cls +=
-                  'bg-amber-400 text-slate-900 border-amber-300 ring-2 ring-amber-200/50 scale-105 shadow-lg';
-              } else {
-                cls +=
-                  'bg-emerald-600/80 border-emerald-500 text-white hover:bg-emerald-500 cursor-pointer';
-              }
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  disabled={booked}
-                  onClick={() => !booked && onToggle(s.id)}
-                  className={cls}
-                >
-                  {s.seatLabel}
-                </button>
-              );
-            })}
-          </div>
+      <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50/95 px-3 py-2 backdrop-blur">
+        <div className="flex flex-wrap gap-4 text-xs text-slate-600">
+          <span className="flex items-center gap-2">
+            <span className="h-4 w-4 rounded bg-emerald-500 shadow seat-btn" /> Available
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="h-4 w-4 rounded bg-red-600 shadow" /> Booked
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="h-4 w-4 rounded bg-amber-400 shadow" /> Selected
+          </span>
         </div>
-      ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={pickBestAvailable}>
+            Pick first available
+          </Button>
+          <label className="flex items-center gap-2 text-xs text-slate-600">
+            Zoom
+            <input
+              type="range"
+              min="0.85"
+              max="1.25"
+              step="0.05"
+              value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="w-24"
+            />
+          </label>
+        </div>
+      </div>
+      <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }} className="inline-block min-w-full">
+        {rows.map(([rowKey, rowSeats]) => (
+          <div key={rowKey} className="mb-3 flex flex-wrap items-center gap-2">
+            <span className="w-10 text-right text-sm font-semibold text-slate-600">{rowKey}</span>
+            <div className="flex flex-wrap gap-2">
+              {rowSeats.map((s) => {
+                const booked = s.availability === 'BOOKED';
+                const selected = selectedIds.includes(s.id);
+                let cls =
+                  'seat-btn min-w-[2.75rem] h-9 px-2 border ';
+                if (booked) {
+                  cls += 'bg-red-100 border-red-300 text-red-800 cursor-not-allowed opacity-80';
+                } else if (selected) {
+                  cls +=
+                    'bg-amber-400 text-slate-900 border-amber-500 ring-2 ring-amber-200 scale-105 shadow-lg';
+                } else {
+                  cls +=
+                    'bg-emerald-600 border-emerald-500 text-white hover:bg-emerald-500 cursor-pointer';
+                }
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    disabled={booked}
+                    onClick={() => !booked && onToggle(s.id)}
+                    className={cls}
+                  >
+                    {s.seatLabel}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

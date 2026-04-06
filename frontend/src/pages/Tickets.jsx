@@ -116,16 +116,19 @@ export default function TicketsPage() {
 
   return (
     <div className="space-y-10">
-      <h1 className="text-2xl font-bold text-white">Tickets & maintenance</h1>
+      <div className="border-b border-slate-200 pb-6">
+        <h1 className="font-display text-3xl font-bold text-slate-900">Service tickets</h1>
+        <p className="mt-1 text-slate-600">Report facility issues. SLA targets depend on priority.</p>
+      </div>
 
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">New ticket</h2>
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">New ticket</h2>
         <form onSubmit={createTicket} className="grid gap-4 max-w-xl">
           <div>
-            <label className="block text-xs text-slate-500 mb-1">Resource</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Resource</label>
             <select
               required
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm"
               value={newTicket.resourceId}
               onChange={(e) => setNewTicket((t) => ({ ...t, resourceId: e.target.value }))}
             >
@@ -138,9 +141,9 @@ export default function TicketsPage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-slate-500 mb-1">Priority</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Priority</label>
             <select
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm"
               value={newTicket.priority}
               onChange={(e) => setNewTicket((t) => ({ ...t, priority: e.target.value }))}
             >
@@ -151,54 +154,63 @@ export default function TicketsPage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-slate-500 mb-1">Description</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
             <textarea
               required
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white min-h-[100px]"
+              className="min-h-[100px] w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm"
               value={newTicket.description}
               onChange={(e) => setNewTicket((t) => ({ ...t, description: e.target.value }))}
             />
           </div>
           <button
             type="submit"
-            className="px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white w-fit"
+            className="w-fit rounded-lg bg-uni-blue px-5 py-2 text-white shadow-sm hover:bg-[#1a4380]"
           >
             Submit ticket
           </button>
         </form>
       </section>
 
-      {error && <p className="text-red-400">{error}</p>}
+      {error && <p className="text-red-700">{error}</p>}
       {loading && <p className="text-slate-500">Loading…</p>}
 
       <section className="space-y-3">
         {list.map((t) => (
-          <div key={t.id} className="rounded-xl border border-slate-800 bg-slate-900/40 overflow-hidden">
+          <div key={t.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <button
               type="button"
-              className="w-full text-left p-4 flex flex-wrap justify-between gap-3 hover:bg-slate-800/30"
+              className="flex w-full flex-wrap justify-between gap-3 p-4 text-left hover:bg-slate-50"
               onClick={() => setExpanded(expanded === t.id ? null : t.id)}
             >
               <div>
-                <span className="text-white font-medium">#{t.id}</span>{' '}
-                <span className="text-slate-400">{t.resourceName}</span>
+                <span className="font-medium text-slate-900">#{t.id}</span>{' '}
+                <span className="text-slate-600">{t.resourceName}</span>
                 <span
                   className={`ml-2 text-xs px-2 py-0.5 rounded ${
                     t.status === 'RESOLVED' || t.status === 'CLOSED'
                       ? 'bg-emerald-900/50 text-emerald-300'
                       : t.status === 'OPEN'
                         ? 'bg-amber-900/50 text-amber-200'
-                        : 'bg-slate-800 text-slate-300'
+                        : 'bg-slate-200 text-slate-700'
                   }`}
                 >
                   {t.status}
                 </span>
               </div>
-              <span className="text-slate-500 text-sm">{t.priority}</span>
+              <span className="text-sm text-slate-600">{t.priority}</span>
+              {t.slaBreached && (
+                <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">SLA</span>
+              )}
             </button>
             {expanded === t.id && (
-              <div className="border-t border-slate-800 p-4 space-y-4 text-sm">
-                <p className="text-slate-300 whitespace-pre-wrap">{t.description}</p>
+              <div className="space-y-4 border-t border-slate-100 p-4 text-sm">
+                {t.slaDueAt && (
+                  <p className="text-xs text-slate-500">
+                    SLA target: {new Date(t.slaDueAt).toLocaleString()}
+                    {t.slaBreached ? ' (breached)' : ''}
+                  </p>
+                )}
+                <p className="whitespace-pre-wrap text-slate-700">{t.description}</p>
                 <div className="flex flex-wrap gap-2">
                   {(user?.role === 'ADMIN' || user?.role === 'TECHNICIAN') && (
                     <>
@@ -207,7 +219,7 @@ export default function TicketsPage() {
                           key={s}
                           type="button"
                           onClick={() => updateStatus(t.id, s)}
-                          className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-white"
+                          className="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 hover:bg-slate-50"
                         >
                           Set {s}
                         </button>
@@ -218,7 +230,7 @@ export default function TicketsPage() {
                     <button
                       type="button"
                       onClick={() => assignTech(t.id)}
-                      className="px-2 py-1 rounded bg-violet-800 hover:bg-violet-700 text-xs text-white"
+                      className="rounded bg-violet-700 px-2 py-1 text-xs text-white hover:bg-violet-600"
                     >
                       Assign technician
                     </button>
@@ -228,9 +240,9 @@ export default function TicketsPage() {
                   <p className="text-slate-500 text-xs mb-2">Comments</p>
                   <ul className="space-y-2">
                     {(t.comments || []).map((c) => (
-                      <li key={c.id} className="bg-slate-950/60 rounded-lg p-3 border border-slate-800">
+                      <li key={c.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                         <div className="flex justify-between gap-2">
-                          <span className="text-slate-500 text-xs">{c.userEmail}</span>
+                          <span className="text-xs text-slate-500">{c.userEmail}</span>
                           {c.userId === user?.userId && (
                             <span className="flex gap-2">
                               <button
@@ -256,7 +268,7 @@ export default function TicketsPage() {
                   </ul>
                   <div className="mt-3 flex gap-2">
                     <input
-                      className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                      className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm"
                       placeholder="Add a comment"
                       value={commentText[t.id] || ''}
                       onChange={(e) =>
@@ -266,7 +278,7 @@ export default function TicketsPage() {
                     <button
                       type="button"
                       onClick={() => addComment(t.id)}
-                      className="px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white"
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 hover:bg-slate-50"
                     >
                       Send
                     </button>
