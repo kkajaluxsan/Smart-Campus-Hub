@@ -56,30 +56,30 @@ export default function AuditoriumPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-6">
-        <Link to="/resources" className="text-sky-400 hover:underline text-sm">
+      <div className="mb-6 flex items-center gap-4">
+        <Link to="/resources" className="text-sm text-uni-blue no-underline hover:underline">
           ← Resources
         </Link>
       </div>
-      <h1 className="text-2xl font-bold text-white mb-2">Auditorium seat map</h1>
-      <p className="text-slate-400 mb-6">{name || `Resource #${resourceId}`}</p>
+      <h1 className="text-2xl font-bold text-slate-900 mb-2">Auditorium seat map</h1>
+      <p className="text-slate-600 mb-6">{name || `Resource #${resourceId}`}</p>
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 space-y-4 max-w-3xl">
+      <div className="max-w-3xl space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-slate-500 mb-1">Start</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">Start</label>
             <input
               type="datetime-local"
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
             />
           </div>
           <div>
-            <label className="block text-xs text-slate-500 mb-1">End</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">End</label>
             <input
               type="datetime-local"
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
             />
@@ -93,14 +93,14 @@ export default function AuditoriumPage() {
         >
           {loading ? 'Loading…' : 'Load availability'}
         </button>
-        {error && <p className="text-red-400 text-sm">{error}</p>}
+        {error && <p className="text-sm text-red-700">{error}</p>}
         {seatRows.length > 0 && (
           <div className="transition-opacity duration-300">
             <SeatGrid seats={seatRows} selectedIds={selectedSeats} onToggle={toggleSeat} />
-            <div className="mt-6 p-4 rounded-xl bg-slate-950/80 border border-slate-700 text-sm space-y-1">
+            <div className="mt-6 space-y-1 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
               <p>
                 <span className="text-slate-500">Selected seats:</span>{' '}
-                <span className="text-amber-300 font-mono">
+                <span className="font-mono text-amber-900">
                   {seatRows
                     .filter((s) => selectedSeats.includes(s.id))
                     .map((s) => s.seatLabel)
@@ -113,7 +113,7 @@ export default function AuditoriumPage() {
               <Link
                 to="/bookings"
                 state={{ preselectResourceId: Number(resourceId) }}
-                className="inline-block mt-3 text-sky-400 hover:underline"
+                className="mt-3 inline-block text-uni-blue no-underline hover:underline"
               >
                 Continue to booking form →
               </Link>

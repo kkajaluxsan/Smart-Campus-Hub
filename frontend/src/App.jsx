@@ -9,6 +9,10 @@ import AuditoriumPage from './pages/AuditoriumPage';
 import Tickets from './pages/Tickets';
 import Notifications from './pages/Notifications';
 import AdminResources from './pages/AdminResources';
+import BookingCalendar from './pages/BookingCalendar';
+import AdminApprovals from './pages/AdminApprovals';
+import ResourceSchedule from './pages/ResourceSchedule';
+import TechWorkload from './pages/TechWorkload';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -20,6 +24,10 @@ function App() {
         <Route index element={<Dashboard />} />
         <Route path="resources" element={<Resources />} />
         <Route path="bookings" element={<Bookings />} />
+        <Route path="bookings/calendar" element={<BookingCalendar />} />
+        <Route path="admin/approvals" element={<AdminApprovals />} />
+        <Route path="resources/:id/schedule" element={<ResourceSchedule />} />
+        <Route path="tech/workload" element={<TechWorkload />} />
         <Route path="auditorium/:resourceId" element={<AuditoriumPage />} />
         <Route path="tickets" element={<Tickets />} />
         <Route path="notifications" element={<Notifications />} />

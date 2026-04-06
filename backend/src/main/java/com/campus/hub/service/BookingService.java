@@ -1,8 +1,6 @@
 package com.campus.hub.service;
 
-import com.campus.hub.dto.BookingDecisionRequest;
-import com.campus.hub.dto.BookingDto;
-import com.campus.hub.dto.CreateBookingRequest;
+import com.campus.hub.dto.*;
 import com.campus.hub.exception.ApiException;
 import com.campus.hub.model.*;
 import com.campus.hub.repository.BookingRepository;
@@ -29,6 +27,17 @@ public class BookingService {
     private final NotificationService notificationService;
 
     private static final List<BookingStatus> ACTIVE = List.of(BookingStatus.PENDING, BookingStatus.APPROVED);
+    private static final List<BookingStatus> SCHEDULE_STATUSES =
+            List.of(BookingStatus.PENDING, BookingStatus.APPROVED);
+
+    @Transactional(readOnly = true)
+    public List<BookingDto> upcomingForUser(User user) {
+        return bookingRepository
+                .findTop5ByUserIdAndStartTimeAfterOrderByStartTimeAsc(user.getId(), LocalDateTime.now())
+                .stream()
+                .map(this::toDto)
+                .toList();
+    }
 
     @Transactional(readOnly = true)
     public List<BookingDto> listFor(User currentUser) {
@@ -49,7 +58,7 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingDto create(CreateBookingRequest req, User currentUser) {
+    public List<BookingDto> create(CreateBookingRequest req, User currentUser) {
         LocalDateTime now = LocalDateTime.now();
         if (!req.startTime().isAfter(now)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Start time must be in the future");
@@ -58,6 +67,39 @@ public class BookingService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "End time must be after start time");
         }
 
+        String rec = req.recurrence() == null ? "NONE" : req.recurrence().trim();
+        if (rec.isEmpty()) {
+            rec = "NONE";
+        }
+        int occurrences = req.recurrenceOccurrences() == null ? 1 : req.recurrenceOccurrences();
+        if ("NONE".equalsIgnoreCase(rec)) {
+            occurrences = 1;
+        } else {
+            if (occurrences < 2 || occurrences > 26) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "Recurrence count must be between 2 and 26");
+            }
+            if (!"WEEKLY".equalsIgnoreCase(rec) && !"BIWEEKLY".equalsIgnoreCase(rec)) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "Recurrence must be WEEKLY or BIWEEKLY");
+            }
+        }
+
+        List<BookingDto> created = new ArrayList<>();
+        for (int i = 0; i < occurrences; i++) {
+            long weekStep = "BIWEEKLY".equalsIgnoreCase(rec) ? 2L * i : i;
+            LocalDateTime start = req.startTime().plusWeeks(weekStep);
+            LocalDateTime end = req.endTime().plusWeeks(weekStep);
+            if (!start.isAfter(now)) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "Each occurrence must start in the future");
+            }
+            if (!end.isAfter(start)) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid recurrence window");
+            }
+            created.add(createBookingInternal(req, start, end, currentUser));
+        }
+        return created;
+    }
+
+    private BookingDto createBookingInternal(CreateBookingRequest req, LocalDateTime start, LocalDateTime end, User currentUser) {
         CampusResource resource = resourceRepository.findById(req.resourceId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Resource not found"));
 
@@ -89,19 +131,19 @@ public class BookingService {
             if (req.attendees() != null && !req.attendees().equals(req.seatIds().size())) {
                 throw new ApiException(HttpStatus.BAD_REQUEST, "Attendees count must match selected seats");
             }
-            validateAuditoriumSeats(resource, req);
+            validateAuditoriumSeats(resource, req.seatIds(), start, end);
         } else {
             if (req.seatIds() != null && !req.seatIds().isEmpty()) {
                 throw new ApiException(HttpStatus.BAD_REQUEST, "Seats only apply to auditoriums");
             }
-            validateResourceOverlap(resource.getId(), req.startTime(), req.endTime());
+            validateResourceOverlap(resource.getId(), start, end);
         }
 
         Booking booking = Booking.builder()
                 .user(currentUser)
                 .resource(resource)
-                .startTime(req.startTime())
-                .endTime(req.endTime())
+                .startTime(start)
+                .endTime(end)
                 .purpose(req.purpose())
                 .attendees(headcount)
                 .status(BookingStatus.PENDING)
@@ -124,6 +166,48 @@ public class BookingService {
         return toDto(booking);
     }
 
+    @Transactional(readOnly = true)
+    public List<BookingScheduleItemDto> scheduleForResource(Long resourceId, LocalDateTime rangeStart, LocalDateTime rangeEnd) {
+        if (!rangeEnd.isAfter(rangeStart)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "rangeEnd must be after rangeStart");
+        }
+        resourceRepository.findById(resourceId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Resource not found"));
+        List<Booking> rows = bookingRepository.findScheduleForResource(resourceId, SCHEDULE_STATUSES, rangeStart, rangeEnd);
+        return rows.stream()
+                .map(b -> new BookingScheduleItemDto(
+                        b.getId(),
+                        b.getStartTime(),
+                        b.getEndTime(),
+                        b.getStatus(),
+                        "Booking #" + b.getId()))
+                .toList();
+    }
+
+    @Transactional
+    public List<BookingDto> bulkApprove(BulkBookingIdsRequest req, User admin) {
+        if (admin.getRole() != Role.ADMIN) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Admin only");
+        }
+        List<BookingDto> out = new ArrayList<>();
+        for (Long id : req.bookingIds()) {
+            out.add(approve(id, new BookingDecisionRequest(req.reason()), admin));
+        }
+        return out;
+    }
+
+    @Transactional
+    public List<BookingDto> bulkReject(BulkBookingIdsRequest req, User admin) {
+        if (admin.getRole() != Role.ADMIN) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Admin only");
+        }
+        List<BookingDto> out = new ArrayList<>();
+        for (Long id : req.bookingIds()) {
+            out.add(reject(id, new BookingDecisionRequest(req.reason()), admin));
+        }
+        return out;
+    }
+
     private void validateResourceOverlap(Long resourceId, LocalDateTime start, LocalDateTime end) {
         List<Booking> overlaps = bookingRepository.findOverlappingForResource(resourceId, start, end, ACTIVE);
         if (!overlaps.isEmpty()) {
@@ -131,12 +215,12 @@ public class BookingService {
         }
     }
 
-    private void validateAuditoriumSeats(CampusResource resource, CreateBookingRequest req) {
-        for (Long seatId : req.seatIds()) {
+    private void validateAuditoriumSeats(CampusResource resource, List<Long> seatIds, LocalDateTime start, LocalDateTime end) {
+        for (Long seatId : seatIds) {
             Seat seat = seatRepository.findByIdAndResourceId(seatId, resource.getId())
                     .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Invalid seat"));
             List<Booking> conflicts = bookingRepository.findOverlappingForSeat(
-                    seat.getId(), req.startTime(), req.endTime(), ACTIVE);
+                    seat.getId(), start, end, ACTIVE);
             if (!conflicts.isEmpty()) {
                 throw new ApiException(HttpStatus.CONFLICT,
                         "Seat " + seat.getSeatLabel() + " is already booked for this time range");

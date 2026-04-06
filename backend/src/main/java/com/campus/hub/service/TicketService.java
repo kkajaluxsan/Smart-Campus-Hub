@@ -32,6 +32,20 @@ public class TicketService {
     private final FileStorageService fileStorageService;
 
     @Transactional(readOnly = true)
+    public TechnicianWorkloadDto workloadForTechnician(User tech) {
+        if (tech.getRole() != Role.TECHNICIAN) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Technicians only");
+        }
+        List<TicketDto> tickets = list(tech).stream()
+                .filter(t -> t.status() == TicketStatus.OPEN || t.status() == TicketStatus.IN_PROGRESS)
+                .toList();
+        long breached = tickets.stream()
+                .filter(t -> Boolean.TRUE.equals(t.slaBreached()))
+                .count();
+        return new TechnicianWorkloadDto(tickets.size(), breached, tickets);
+    }
+
+    @Transactional(readOnly = true)
     public List<TicketDto> list(User currentUser) {
         List<Ticket> tickets = switch (currentUser.getRole()) {
             case ADMIN -> ticketRepository.findAllByOrderByUpdatedAtDesc();
@@ -53,14 +67,16 @@ public class TicketService {
     public TicketDto create(CreateTicketRequest req, User currentUser) {
         CampusResource resource = campusResourceRepository.findById(req.resourceId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Resource not found"));
+        Instant now = Instant.now();
         Ticket ticket = Ticket.builder()
                 .resource(resource)
                 .createdBy(currentUser)
                 .description(req.description())
                 .priority(req.priority())
                 .status(TicketStatus.OPEN)
-                .createdAt(Instant.now())
-                .updatedAt(Instant.now())
+                .createdAt(now)
+                .updatedAt(now)
+                .slaDueAt(TicketSlaCalculator.computeDue(now, req.priority()))
                 .build();
         ticketRepository.save(ticket);
         auditService.log(currentUser, "TICKET_CREATED", "Ticket", ticket.getId(), null);
@@ -86,6 +102,7 @@ public class TicketService {
             }
             if (req.priority() != null) {
                 t.setPriority(req.priority());
+                t.setSlaDueAt(TicketSlaCalculator.computeDue(t.getCreatedAt(), req.priority()));
             }
             if (req.description() != null) {
                 t.setDescription(req.description());
@@ -214,6 +231,9 @@ public class TicketService {
         List<AttachmentDto> attachments = attachmentRepository.findByTicketId(t.getId()).stream()
                 .map(this::toAttachmentDto)
                 .toList();
+        boolean open = t.getStatus() != TicketStatus.CLOSED && t.getStatus() != TicketStatus.RESOLVED;
+        Instant sla = t.getSlaDueAt();
+        boolean breached = open && sla != null && Instant.now().isAfter(sla);
         return new TicketDto(
                 t.getId(),
                 t.getResource().getId(),
@@ -227,6 +247,8 @@ public class TicketService {
                 t.getStatus(),
                 t.getCreatedAt(),
                 t.getUpdatedAt(),
+                sla,
+                breached,
                 comments,
                 attachments
         );

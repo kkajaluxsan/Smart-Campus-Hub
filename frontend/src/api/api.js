@@ -8,6 +8,8 @@ export const auth = {
 export const resources = {
   list: (params) => api.get('/api/resources', { params }),
   get: (id) => api.get(`/api/resources/${id}`),
+  schedule: (id, start, end) =>
+    api.get(`/api/resources/${id}/schedule`, { params: { start, end } }),
   create: (body) => api.post('/api/resources', body),
   update: (id, body) => api.put(`/api/resources/${id}`, body),
   remove: (id) => api.delete(`/api/resources/${id}`),
@@ -27,6 +29,19 @@ export const bookings = {
   approve: (id, reason) => api.put(`/api/bookings/${id}/approve`, { reason }),
   reject: (id, reason) => api.put(`/api/bookings/${id}/reject`, { reason }),
   cancel: (id) => api.delete(`/api/bookings/${id}`),
+};
+
+export const adminBookings = {
+  bulkApprove: (body) => api.post('/api/admin/bookings/bulk-approve', body),
+  bulkReject: (body) => api.post('/api/admin/bookings/bulk-reject', body),
+};
+
+export const dashboard = {
+  summary: () => api.get('/api/dashboard/summary'),
+};
+
+export const tech = {
+  workload: () => api.get('/api/tech/workload'),
 };
 
 export const tickets = {

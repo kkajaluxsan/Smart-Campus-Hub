@@ -33,7 +33,7 @@ public class BookingController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public BookingDto create(@Valid @RequestBody CreateBookingRequest req) {
+    public List<BookingDto> create(@Valid @RequestBody CreateBookingRequest req) {
         return bookingService.create(req, currentUserService.requireCurrentUser());
     }
 
