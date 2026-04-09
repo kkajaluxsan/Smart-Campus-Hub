@@ -19,5 +19,7 @@ public record BookingDto(
         BookingStatus status,
         String adminReason,
         Instant createdAt,
-        List<String> seatLabels
+        List<String> seatLabels,
+        String requesterStudentIndexNumber,
+        String requesterDepartment
 ) {}

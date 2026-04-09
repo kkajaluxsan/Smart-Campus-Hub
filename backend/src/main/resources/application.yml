@@ -17,6 +17,8 @@ spring:
     multipart:
       max-file-size: 5MB
       max-request-size: 15MB
+  mail:
+    default-encoding: UTF-8
 
 # Switch to PostgreSQL for production (see README)
 #  datasource:
@@ -31,6 +33,11 @@ app:
     expiration-ms: 86400000
   upload:
     dir: ${user.home}/campus-hub-uploads
+  mail:
+    enabled: false
+    from: noreply@campus.edu
+
+# When app.mail.enabled=true, configure SMTP (e.g. spring.mail.host=smtp.example.com)
 
 server:
   port: 8080

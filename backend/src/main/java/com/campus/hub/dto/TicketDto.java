@@ -19,6 +19,8 @@ public record TicketDto(
         TicketStatus status,
         Instant createdAt,
         Instant updatedAt,
+        Instant slaDueAt,
+        Boolean slaBreached,
         List<CommentDto> comments,
         List<AttachmentDto> attachments
 ) {}

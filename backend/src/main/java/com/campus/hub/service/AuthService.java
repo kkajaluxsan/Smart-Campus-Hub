@@ -3,6 +3,7 @@ package com.campus.hub.service;
 import com.campus.hub.dto.AuthResponse;
 import com.campus.hub.dto.LoginRequest;
 import com.campus.hub.dto.RegisterRequest;
+import com.campus.hub.dto.UserProfileDto;
 import com.campus.hub.exception.ApiException;
 import com.campus.hub.model.Role;
 import com.campus.hub.model.User;
@@ -27,15 +28,22 @@ public class AuthService {
         if (userRepository.existsByEmail(req.email())) {
             throw new ApiException(HttpStatus.CONFLICT, "Email already registered");
         }
+        if (userRepository.existsByStudentIndexNumber(req.studentIndexNumber().trim())) {
+            throw new ApiException(HttpStatus.CONFLICT, "This index number is already registered");
+        }
         User u = User.builder()
                 .email(req.email())
                 .password(passwordEncoder.encode(req.password()))
                 .fullName(req.fullName())
                 .role(Role.USER)
+                .studentIndexNumber(req.studentIndexNumber().trim())
+                .academicYear(req.academicYear())
+                .semester(req.semester())
+                .department(req.department())
                 .build();
         userRepository.save(u);
         String token = jwtTokenProvider.createToken(u.getEmail(), u.getId(), u.getRole());
-        return new AuthResponse(token, u.getId(), u.getEmail(), u.getFullName(), u.getRole());
+        return UserProfileMapper.toAuthResponse(u, token);
     }
 
     @Transactional(readOnly = true)
@@ -46,6 +54,11 @@ public class AuthService {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
         String token = jwtTokenProvider.createToken(u.getEmail(), u.getId(), u.getRole());
-        return new AuthResponse(token, u.getId(), u.getEmail(), u.getFullName(), u.getRole());
+        return UserProfileMapper.toAuthResponse(u, token);
+    }
+
+    @Transactional(readOnly = true)
+    public UserProfileDto currentProfile(User user) {
+        return UserProfileMapper.toProfileDto(user);
     }
 }

@@ -28,4 +28,17 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    /** Campus index / registration number (students) */
+    @Column(unique = true, length = 64)
+    private String studentIndexNumber;
+
+    /** Academic year of study, e.g. 3 for "Year 3" */
+    private Integer academicYear;
+
+    /** Semester 1 or 2 */
+    private Integer semester;
+
+    @Enumerated(EnumType.STRING)
+    private Department department;
 }
