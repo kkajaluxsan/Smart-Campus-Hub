@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { dashboard } from '../api/api';
 import { useAuth } from '../context/AuthContext';
-import { formatDepartment, formatYearSemester } from '../constants/studentProfile';
 import PageHeader from '../components/PageHeader';
 import { Card, CardContent, CardDescription, CardTitle } from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -54,39 +53,6 @@ export default function Dashboard() {
       {error && (
         <p className="mb-6 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
       )}
-
-      {user?.role === 'USER' &&
-        (user?.studentIndexNumber ||
-          user?.department ||
-          (user?.academicYear != null && user?.semester != null)) && (
-          <Card className="mb-6 border-uni-blue/25 bg-uni-blue/[0.04]">
-            <CardContent className="p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-uni-blue">Student profile</p>
-              <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
-                {user.studentIndexNumber && (
-                  <div>
-                    <dt className="text-slate-500">Index number</dt>
-                    <dd className="font-medium text-slate-900">{user.studentIndexNumber}</dd>
-                  </div>
-                )}
-                {(user.academicYear != null && user.semester != null) && (
-                  <div>
-                    <dt className="text-slate-500">Year & semester</dt>
-                    <dd className="font-medium text-slate-900">
-                      {formatYearSemester(user.academicYear, user.semester)}
-                    </dd>
-                  </div>
-                )}
-                {user.department && (
-                  <div className="sm:col-span-2">
-                    <dt className="text-slate-500">Department</dt>
-                    <dd className="font-medium text-slate-900">{formatDepartment(user.department)}</dd>
-                  </div>
-                )}
-              </dl>
-            </CardContent>
-          </Card>
-        )}
 
       {summary && (
         <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

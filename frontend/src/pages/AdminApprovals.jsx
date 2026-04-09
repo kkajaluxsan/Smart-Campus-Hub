@@ -8,7 +8,6 @@ import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import Input from '../components/ui/Input';
 import { Table, Th, Td } from '../components/ui/Table';
-import { formatDepartment } from '../constants/studentProfile';
 
 export default function AdminApprovals() {
   const { user } = useAuth();
@@ -149,16 +148,7 @@ export default function AdminApprovals() {
                     />
                   </Td>
                   <Td className="font-medium text-slate-900">{b.resourceName}</Td>
-                  <Td className="text-slate-600">
-                    <div className="font-medium text-slate-800">{b.userEmail}</div>
-                    {(b.requesterStudentIndexNumber || b.requesterDepartment) && (
-                      <div className="mt-0.5 text-xs text-slate-500">
-                        {[b.requesterStudentIndexNumber, b.requesterDepartment && formatDepartment(b.requesterDepartment)]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </div>
-                    )}
-                  </Td>
+                  <Td className="text-slate-600">{b.userEmail}</Td>
                   <Td className="text-slate-600 text-xs">
                     {b.startTime} → {b.endTime}
                   </Td>

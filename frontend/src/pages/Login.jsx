@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { DEPARTMENTS } from '../constants/studentProfile';
 import { tokens } from '../theme/tokens';
 import Button from '../components/ui/Button';
 
@@ -85,73 +84,15 @@ export default function Login() {
             </div>
             <form onSubmit={submit} className="space-y-4">
               {mode === 'register' && (
-                <>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Full name</label>
-                    <input
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm focus:border-uni-blue focus:outline-none focus:ring-2 focus:ring-uni-blue/20"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Index number</label>
-                    <input
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm focus:border-uni-blue focus:outline-none focus:ring-2 focus:ring-uni-blue/20"
-                      value={studentIndexNumber}
-                      onChange={(e) => setStudentIndexNumber(e.target.value)}
-                      placeholder="e.g. IT2024001"
-                      required
-                      minLength={3}
-                      maxLength={64}
-                    />
-                    <p className="mt-1 text-xs text-slate-500">Your official campus registration / index number.</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">Year of study</label>
-                      <select
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm"
-                        value={academicYear}
-                        onChange={(e) => setAcademicYear(e.target.value)}
-                        required
-                      >
-                        <option value="1">Year 1</option>
-                        <option value="2">Year 2</option>
-                        <option value="3">Year 3</option>
-                        <option value="4">Year 4</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">Semester</label>
-                      <select
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm"
-                        value={semester}
-                        onChange={(e) => setSemester(e.target.value)}
-                        required
-                      >
-                        <option value="1">Semester 1</option>
-                        <option value="2">Semester 2</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Department</label>
-                    <select
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm"
-                      value={department}
-                      onChange={(e) => setDepartment(e.target.value)}
-                      required
-                    >
-                      {DEPARTMENTS.map((d) => (
-                        <option key={d.value} value={d.value}>
-                          {d.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Full name</label>
+                  <input
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm focus:border-uni-blue focus:outline-none focus:ring-2 focus:ring-uni-blue/20"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
+                </div>
               )}
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">Email</label>

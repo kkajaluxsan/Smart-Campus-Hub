@@ -70,31 +70,12 @@ export default function Layout({ children }) {
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-semibold uppercase tracking-wide text-slate-500">Signed in to campus portal</p>
             </div>
-            <div className="min-w-0 max-w-[55vw] text-right text-xs text-slate-600 sm:max-w-none sm:text-sm">
-              <span className="font-medium text-slate-900">{user?.fullName}</span>
-              <span className="text-slate-400"> · </span>
-              <span className="text-slate-500">{user?.role}</span>
-              {user?.role === 'USER' &&
-                (user?.studentIndexNumber ||
-                  user?.department ||
-                  (user?.academicYear != null && user?.semester != null)) && (
-                  <span className="mt-0.5 block truncate text-slate-500" title={[
-                    user.studentIndexNumber,
-                    formatYearSemester(user.academicYear, user.semester),
-                    formatDepartment(user.department),
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}>
-                    {[
-                      user.studentIndexNumber,
-                      formatYearSemester(user.academicYear, user.semester),
-                      formatDepartment(user.department),
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </span>
-                )}
-            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <span className="hidden text-slate-600 sm:inline">
+                <span className="font-medium text-slate-900">{user?.fullName}</span>
+                <span className="text-slate-400"> · </span>
+                <span className="text-slate-500">{user?.role}</span>
+              </span>
               <button
                 type="button"
                 onClick={() => {
@@ -105,6 +86,7 @@ export default function Layout({ children }) {
               >
                 Sign out
               </button>
+            </div>
           </div>
         </header>
 
