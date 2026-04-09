@@ -15,7 +15,10 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  ExternalLink
+  ExternalLink,
+  ShieldCheck,
+  TrendingUp,
+  AlertCircle
 } from 'lucide-react';
 import { tickets, resources } from '../api/api';
 import { useAuth } from '../context/AuthContext';
@@ -33,15 +36,18 @@ export default function TicketsPage() {
   const [resList, setResList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [expanded, setExpanded] = useState(null);
   const [newTicket, setNewTicket] = useState({
     resourceId: '',
     description: '',
     priority: 'MEDIUM',
   });
+  const [formErrors, setFormErrors] = useState({});
   const [commentText, setCommentText] = useState({});
 
   const load = async () => {
+    setLoading(true);
     setError('');
     try {
       const [{ data: t }, { data: r }] = await Promise.all([tickets.list(), resources.list({})]);
@@ -58,15 +64,31 @@ export default function TicketsPage() {
     load();
   }, []);
 
+  const validateForm = () => {
+    const errs = {};
+    if (!newTicket.resourceId) errs.resourceId = 'Please select a resource.';
+    if (!newTicket.description || newTicket.description.trim().length < 20) {
+      errs.description = 'Description must be at least 20 characters long.';
+    }
+    setFormErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const createTicket = async (e) => {
     e.preventDefault();
+    setError('');
+    setSuccessMsg('');
+    if (!validateForm()) return;
+
     try {
       await tickets.create({
         resourceId: Number(newTicket.resourceId),
         description: newTicket.description,
         priority: newTicket.priority,
       });
+      setSuccessMsg('Service ticket submitted successfully.');
       setNewTicket({ resourceId: '', description: '', priority: 'MEDIUM' });
+      setFormErrors({});
       await load();
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -76,6 +98,7 @@ export default function TicketsPage() {
   const updateStatus = async (id, status) => {
     try {
       await tickets.update(id, { status });
+      setSuccessMsg(`Status updated to ${status.replace('_', ' ')}.`);
       await load();
     } catch (e) {
       setError(e.response?.data?.message || e.message);
@@ -87,6 +110,7 @@ export default function TicketsPage() {
     if (!tid) return;
     try {
       await tickets.assign(id, Number(tid));
+      setSuccessMsg('Technician assigned successfully.');
       await load();
     } catch (e) {
       setError(e.response?.data?.message || e.message);
@@ -110,6 +134,7 @@ export default function TicketsPage() {
     if (!file) return;
     try {
       await tickets.uploadAttachment(ticketId, file);
+      setSuccessMsg('Attachment uploaded successfully.');
       await load();
       setExpanded(ticketId);
     } catch (e) {
@@ -147,8 +172,10 @@ export default function TicketsPage() {
         return <Badge tone="warning">{status}</Badge>;
       case 'REJECTED':
         return <Badge tone="danger">{status}</Badge>;
-      default:
+      case 'IN_PROGRESS':
         return <Badge tone="info">{status}</Badge>;
+      default:
+        return <Badge tone="default">{status}</Badge>;
     }
   };
 
@@ -159,6 +186,13 @@ export default function TicketsPage() {
       case 'MEDIUM': return 'text-amber-600 bg-amber-50';
       default: return 'text-slate-600 bg-slate-50';
     }
+  };
+
+  const getUserInitials = (email) => {
+    if (!email) return '??';
+    const parts = email.split('@')[0].split('.');
+    if (parts.length > 1) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return parts[0].substring(0, 2).toUpperCase();
   };
 
   return (
@@ -184,25 +218,31 @@ export default function TicketsPage() {
           <CardContent className="pt-2">
             <form onSubmit={createTicket} className="space-y-5">
               <div className="space-y-2">
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Resource</label>
-                <div className="relative">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Affected Resource</label>
+                <div className="relative group">
                   <select
-                    required
-                    className="w-full rounded-2xl border border-slate-100 bg-white/50 px-4 py-3 text-sm font-medium focus:ring-4 focus:ring-uni-blue/10 focus:border-uni-blue outline-none transition-all appearance-none"
+                    className={cn(
+                      'w-full rounded-2xl border bg-white/50 px-4 py-3 text-sm font-medium focus:ring-4 focus:ring-uni-blue/10 focus:border-uni-blue outline-none transition-all appearance-none hover:bg-white',
+                      formErrors.resourceId ? 'border-rose-300' : 'border-slate-100'
+                    )}
                     value={newTicket.resourceId}
-                    onChange={(e) => setNewTicket((t) => ({ ...t, resourceId: e.target.value }))}
+                    onChange={(e) => {
+                      setNewTicket((t) => ({ ...t, resourceId: e.target.value }));
+                      setFormErrors((prev) => ({ ...prev, resourceId: undefined }));
+                    }}
                   >
                     <option value="">Select Resource...</option>
                     {resList.map((r) => (
                       <option key={r.id} value={r.id}>{r.name}</option>
                     ))}
                   </select>
-                  <MapPin className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={16} />
+                  <MapPin className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none group-hover:text-uni-blue transition-colors" size={16} />
                 </div>
+                {formErrors.resourceId && <p className="text-xs font-semibold text-rose-500 ml-1 animate-fade-in">{formErrors.resourceId}</p>}
               </div>
 
               <div className="space-y-2">
-                 <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Priority</label>
+                 <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Priority Level</label>
                  <div className="grid grid-cols-2 gap-2">
                     {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((p) => (
                       <button
@@ -224,13 +264,26 @@ export default function TicketsPage() {
 
               <div className="space-y-2">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Issue Description</label>
-                <textarea
-                  required
-                  placeholder="Describe what's wrong..."
-                  className="min-h-[120px] w-full rounded-2xl border border-slate-100 bg-white/50 px-4 py-3 text-sm font-medium focus:ring-4 focus:ring-uni-blue/10 focus:border-uni-blue outline-none transition-all"
-                  value={newTicket.description}
-                  onChange={(e) => setNewTicket((t) => ({ ...t, description: e.target.value }))}
-                />
+                <div className="relative group">
+                  <textarea
+                    required
+                    placeholder="Provide details about the issue (min 20 chars)..."
+                    className={cn(
+                      "min-h-[120px] w-full rounded-2xl border bg-white/50 px-4 py-3 text-sm font-medium focus:ring-4 focus:ring-uni-blue/10 focus:border-uni-blue outline-none transition-all resize-none hover:bg-white",
+                      formErrors.description ? "border-rose-300" : "border-slate-100"
+                    )}
+                    value={newTicket.description}
+                    onChange={(e) => {
+                      setNewTicket((t) => ({ ...t, description: e.target.value }));
+                      setFormErrors((prev) => ({ ...prev, description: undefined }));
+                    }}
+                  />
+                </div>
+                {formErrors.description ? (
+                  <p className="text-xs font-semibold text-rose-500 ml-1 animate-fade-in">{formErrors.description}</p>
+                ) : (
+                  <p className="text-[10px] font-medium text-slate-400 ml-1">Provide clear context for the technician.</p>
+                )}
               </div>
 
               <Button type="submit" className="w-full" size="lg">
@@ -243,7 +296,10 @@ export default function TicketsPage() {
         {/* Tickets List */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Active Tickets</h2>
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+              <TrendingUp size={20} className="text-uni-blue" />
+              Active Pipeline
+            </h2>
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
               {list.length} Records Found
             </div>
@@ -252,7 +308,7 @@ export default function TicketsPage() {
           {loading && (
             <div className="flex flex-col items-center justify-center py-20 space-y-4 bg-slate-50/50 rounded-[2.5rem] border border-dashed border-slate-200">
               <Loader2 className="animate-spin text-uni-blue" size={32} />
-              <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Loading Tickets...</p>
+              <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Scanning History...</p>
             </div>
           )}
 
@@ -262,7 +318,7 @@ export default function TicketsPage() {
                 <CheckCircle2 className="text-emerald-400" size={32} />
               </div>
               <h3 className="text-xl font-extrabold text-slate-900">System Nominal</h3>
-              <p className="text-slate-500 mt-2 font-medium">No open service tickets reported.</p>
+              <p className="text-slate-500 mt-2 font-medium">No active service tickets found.</p>
             </div>
           )}
 
@@ -271,7 +327,7 @@ export default function TicketsPage() {
               key={t.id} 
               className={cn(
                 "group overflow-hidden transition-all duration-500 animate-slide-up",
-                expanded === t.id ? "ring-2 ring-uni-blue shadow-soft-2xl" : "hover:shadow-soft-lg"
+                expanded === t.id ? "ring-2 ring-uni-blue shadow-soft-2xl scale-[1.01]" : "hover:shadow-soft-lg"
               )}
               style={{ animationDelay: `${i * 0.05}s` }}
             >
@@ -289,7 +345,7 @@ export default function TicketsPage() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-black text-slate-400">#{t.id}</span>
+                      <span className="text-xs font-black text-slate-400 uppercase tracking-widest">#{t.id}</span>
                       {getStatusBadge(t.status)}
                       {t.slaBreached && (
                         <span className="px-2 py-0.5 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-widest border border-rose-100 flex items-center gap-1">
@@ -316,8 +372,8 @@ export default function TicketsPage() {
 
               {expanded === t.id && (
                 <div className="border-t border-slate-100 bg-slate-50/30 p-8 space-y-8 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="grid gap-6 md:grid-cols-3">
-                    <div className="md:col-span-2 space-y-4">
+                  <div className="grid gap-8 md:grid-cols-3">
+                    <div className="md:col-span-2 space-y-6">
                       <div>
                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                            <ImageIcon size={14} /> Incident Overview
@@ -345,13 +401,18 @@ export default function TicketsPage() {
                       <div className="space-y-4">
                          {(currentUser?.role === 'ADMIN' || currentUser?.role === 'TECHNICIAN') && (
                           <div className="space-y-2">
-                             <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Management</p>
+                             <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Workflow Control</p>
                              <div className="flex flex-wrap gap-2">
                                 {['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'REJECTED'].map((s) => (
                                   <button
                                     key={s}
                                     onClick={() => updateStatus(t.id, s)}
-                                    className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-[10px] font-bold text-slate-600 hover:bg-slate-50 transition-all hover:border-slate-300 active:scale-95"
+                                    className={cn(
+                                      "px-3 py-1.5 rounded-xl border text-[10px] font-bold transition-all hover:shadow-sm active:scale-95",
+                                      t.status === s 
+                                        ? "bg-uni-blue border-uni-blue text-white" 
+                                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                                    )}
                                   >
                                     {s.replace('_', ' ')}
                                   </button>
@@ -364,7 +425,7 @@ export default function TicketsPage() {
                                 className="w-full mt-2"
                                 onClick={() => assignTech(t.id)}
                                >
-                                Assign Technician
+                                <Users size={14} /> Assign Technician
                                </Button>
                              )}
                           </div>
@@ -372,7 +433,7 @@ export default function TicketsPage() {
 
                          <div>
                             <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                              <Paperclip size={14} /> Attachments
+                              <Paperclip size={14} /> Documentation
                             </p>
                             <div className="space-y-3">
                                <input
@@ -384,10 +445,12 @@ export default function TicketsPage() {
                                 />
                                 <label 
                                   htmlFor={`file-${t.id}`}
-                                  className="flex items-center justify-center gap-2 w-full p-4 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-uni-blue hover:text-uni-blue transition-all cursor-pointer bg-white/50"
+                                  className="flex items-center justify-center gap-2 w-full p-6 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-uni-blue hover:text-uni-blue hover:bg-uni-blue/5 transition-all cursor-pointer bg-white/50"
                                 >
-                                  <Plus size={18} />
-                                  <span className="text-xs font-bold uppercase tracking-widest">Add Evidence</span>
+                                  <div className="flex flex-col items-center gap-1">
+                                    <Plus size={20} />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Add Evidence</span>
+                                  </div>
                                 </label>
                                 
                                 <ul className="space-y-2">
@@ -412,25 +475,29 @@ export default function TicketsPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                        <MessageSquare size={14} /> Activity Feed
                     </p>
-                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">
+                    <div className="space-y-5 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin">
                       {(t.comments || []).map((c) => (
-                        <div key={c.id} className="relative pl-6">
-                           <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-slate-100 flex items-center justify-center">
-                              <div className="w-2 h-2 rounded-full bg-slate-200"></div>
+                        <div key={c.id} className="relative pl-8">
+                           <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-500 z-10">
+                              {getUserInitials(c.userEmail)}
                            </div>
-                           <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-2 group/comment">
+                           {/* Vertical connector line */}
+                           <div className="absolute left-4 top-8 bottom-[-20px] w-[2px] bg-slate-100"></div>
+                           
+                           <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-2 group/comment hover:shadow-md transition-all">
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                   <User size={10} /> {c.userEmail}
+                                <div className="flex items-center gap-2">
+                                   <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{c.userEmail.split('@')[0]}</span>
+                                   <span className="text-[10px] font-bold text-slate-400">• {new Date(c.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                                 </div>
                                 {c.userId === currentUser?.userId && (
                                   <div className="flex gap-3 opacity-0 group-hover/comment:opacity-100 transition-opacity">
-                                    <button onClick={() => editComment(t.id, c)} className="text-[10px] font-bold text-uni-blue hover:underline uppercase">Edit</button>
-                                    <button onClick={() => deleteComment(t.id, c.id)} className="text-[10px] font-bold text-rose-500 hover:underline uppercase">Delete</button>
+                                    <button onClick={() => editComment(t.id, c)} className="text-[10px] font-bold text-uni-blue hover:underline uppercase tracking-widest">Edit</button>
+                                    <button onClick={() => deleteComment(t.id, c.id)} className="text-[10px] font-bold text-rose-500 hover:underline uppercase tracking-widest">Delete</button>
                                   </div>
                                 )}
                               </div>
@@ -453,7 +520,7 @@ export default function TicketsPage() {
                         />
                         <button
                           onClick={() => addComment(t.id)}
-                          className="bg-uni-blue text-white p-2.5 rounded-full hover:bg-uni-indigo transition-all shadow-md active:scale-90"
+                          className="bg-uni-blue text-white p-2.5 rounded-full hover:bg-uni-indigo transition-all shadow-md active:scale-95"
                         >
                           <Send size={18} />
                         </button>
@@ -466,16 +533,21 @@ export default function TicketsPage() {
         </div>
       </div>
 
-      {error && (
-        <div className="fixed bottom-8 right-8 z-[100] animate-slide-up">
-           <div className="bg-rose-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4">
-              <XCircle size={24} />
+      {(error || successMsg) && (
+        <div className="fixed bottom-8 right-8 z-[100] animate-slide-up max-w-sm">
+           <div className={cn(
+             "px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 relative overflow-hidden",
+             error ? "bg-rose-600 text-white" : "bg-emerald-600 text-white"
+           )}>
+              {error ? <XCircle size={24} /> : <ShieldCheck size={24} />}
               <div>
-                <p className="text-xs font-black uppercase tracking-widest opacity-70">System Error</p>
-                <p className="text-sm font-bold">{error}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest opacity-70">
+                  {error ? 'Operation Failed' : 'Success'}
+                </p>
+                <p className="text-sm font-bold mt-0.5">{error || successMsg}</p>
               </div>
-              <button onClick={() => setError('')} className="ml-4 p-1 hover:bg-white/20 rounded-lg">
-                <XCircle size={20} />
+              <button onClick={() => { setError(''); setSuccessMsg(''); }} className="ml-auto p-1.5 hover:bg-white/20 rounded-xl transition-colors">
+                <XCircle size={18} />
               </button>
            </div>
         </div>
