@@ -1,13 +1,18 @@
 package com.campus.hub.service;
 
 import com.campus.hub.dto.NotificationDto;
+import com.campus.hub.exception.ApiException;
 import com.campus.hub.model.Notification;
 import com.campus.hub.model.NotificationType;
 import com.campus.hub.model.User;
-import com.campus.hub.exception.ApiException;
 import com.campus.hub.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,9 +21,17 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final ObjectProvider<JavaMailSender> mailSenderProvider;
+
+    @Value("${app.mail.enabled:false}")
+    private boolean mailEnabled;
+
+    @Value("${app.mail.from:noreply@campus.edu}")
+    private String mailFrom;
 
     @Transactional
     public void notify(User user, String message, NotificationType type, String referenceType, Long referenceId) {
@@ -32,6 +45,21 @@ public class NotificationService {
                 .referenceId(referenceId)
                 .build();
         notificationRepository.save(n);
+        if (!mailEnabled || user.getEmail() == null) {
+            return;
+        }
+        mailSenderProvider.ifAvailable(ms -> {
+            try {
+                SimpleMailMessage m = new SimpleMailMessage();
+                m.setFrom(mailFrom);
+                m.setTo(user.getEmail());
+                m.setSubject("Campus notification");
+                m.setText(message);
+                ms.send(m);
+            } catch (Exception e) {
+                log.warn("Email failed for {}: {}", user.getEmail(), e.getMessage());
+            }
+        });
     }
 
     @Transactional(readOnly = true)

@@ -49,6 +49,9 @@ public class Ticket {
     @Column(nullable = false)
     private Instant updatedAt;
 
+    /** Response-time target derived from priority at creation / priority change */
+    private Instant slaDueAt;
+
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("createdAt ASC")
     @Builder.Default

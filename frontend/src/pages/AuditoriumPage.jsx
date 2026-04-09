@@ -55,31 +55,31 @@ export default function AuditoriumPage() {
   };
 
   return (
-    <div>
-      <div className="flex items-center gap-4 mb-6">
-        <Link to="/resources" className="text-sky-400 hover:underline text-sm">
+    <div className="animate-fade-in">
+      <div className="mb-6 flex items-center gap-4">
+        <Link to="/resources" className="text-sm font-medium text-blue-600 no-underline hover:underline transition-colors">
           ← Resources
         </Link>
       </div>
-      <h1 className="text-2xl font-bold text-white mb-2">Auditorium seat map</h1>
-      <p className="text-slate-400 mb-6">{name || `Resource #${resourceId}`}</p>
+      <h1 className="font-display text-4xl font-extrabold text-slate-900 mb-2 tracking-tight">Auditorium seat map</h1>
+      <p className="text-slate-500 font-medium mb-8">{name || `Resource #${resourceId}`}</p>
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 space-y-4 max-w-3xl">
+      <div className="max-w-3xl space-y-5 rounded-2xl border border-slate-200/60 bg-white p-8 shadow-sm hover:shadow-md transition-shadow">
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-slate-500 mb-1">Start</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">Start</label>
             <input
               type="datetime-local"
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-900 shadow-sm transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
             />
           </div>
           <div>
-            <label className="block text-xs text-slate-500 mb-1">End</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">End</label>
             <input
               type="datetime-local"
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-900 shadow-sm transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
             />
@@ -89,18 +89,18 @@ export default function AuditoriumPage() {
           type="button"
           onClick={loadSeats}
           disabled={loading || !startTime || !endTime}
-          className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm disabled:opacity-40"
+          className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white text-sm font-medium shadow-md shadow-violet-500/20 disabled:opacity-40 transition-all"
         >
           {loading ? 'Loading…' : 'Load availability'}
         </button>
-        {error && <p className="text-red-400 text-sm">{error}</p>}
+        {error && <p className="text-sm text-red-700">{error}</p>}
         {seatRows.length > 0 && (
           <div className="transition-opacity duration-300">
             <SeatGrid seats={seatRows} selectedIds={selectedSeats} onToggle={toggleSeat} />
-            <div className="mt-6 p-4 rounded-xl bg-slate-950/80 border border-slate-700 text-sm space-y-1">
+            <div className="mt-6 space-y-2 rounded-2xl border border-slate-200/60 bg-gradient-to-r from-slate-50 to-blue-50/30 p-5 text-sm">
               <p>
                 <span className="text-slate-500">Selected seats:</span>{' '}
-                <span className="text-amber-300 font-mono">
+                <span className="font-mono text-amber-900">
                   {seatRows
                     .filter((s) => selectedSeats.includes(s.id))
                     .map((s) => s.seatLabel)
@@ -113,7 +113,7 @@ export default function AuditoriumPage() {
               <Link
                 to="/bookings"
                 state={{ preselectResourceId: Number(resourceId) }}
-                className="inline-block mt-3 text-sky-400 hover:underline"
+                className="mt-3 inline-block font-medium text-blue-600 no-underline hover:underline transition-colors"
               >
                 Continue to booking form →
               </Link>

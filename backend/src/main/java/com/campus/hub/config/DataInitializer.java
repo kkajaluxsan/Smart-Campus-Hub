@@ -1,6 +1,12 @@
 package com.campus.hub.config;
 
-import com.campus.hub.model.*;
+import com.campus.hub.model.CampusResource;
+import com.campus.hub.model.Department;
+import com.campus.hub.model.ResourceStatus;
+import com.campus.hub.model.ResourceType;
+import com.campus.hub.model.Role;
+import com.campus.hub.model.Seat;
+import com.campus.hub.model.User;
 import com.campus.hub.repository.CampusResourceRepository;
 import com.campus.hub.repository.SeatRepository;
 import com.campus.hub.repository.UserRepository;
@@ -30,18 +36,25 @@ public class DataInitializer {
                     .password(passwordEncoder.encode("admin123"))
                     .fullName("Campus Admin")
                     .role(Role.ADMIN)
+                    .emailVerified(true)
                     .build();
             User tech = User.builder()
                     .email("tech@campus.edu")
                     .password(passwordEncoder.encode("tech123"))
                     .fullName("Jane Technician")
                     .role(Role.TECHNICIAN)
+                    .emailVerified(true)
                     .build();
             User user = User.builder()
                     .email("user@campus.edu")
                     .password(passwordEncoder.encode("user123"))
                     .fullName("Alex Student")
                     .role(Role.USER)
+                    .emailVerified(true)
+                    .studentIndexNumber("STU2024001")
+                    .academicYear(2)
+                    .semester(1)
+                    .department(Department.IT)
                     .build();
             userRepository.save(admin);
             userRepository.save(tech);

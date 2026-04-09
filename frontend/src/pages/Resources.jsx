@@ -30,13 +30,16 @@ export default function Resources() {
   }, []);
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-white mb-6">Resources</h1>
-      <div className="flex flex-wrap gap-3 mb-6 items-end">
+    <div className="animate-fade-in">
+      <div className="border-b border-slate-200/50 pb-6 mb-8">
+        <h1 className="font-display text-4xl font-extrabold text-slate-900 tracking-tight">Campus resources</h1>
+        <p className="mt-2 text-slate-500 font-medium">Search rooms, labs, auditoriums, and equipment.</p>
+      </div>
+      <div className="mb-6 flex flex-wrap items-end gap-3">
         <div>
-          <label className="block text-xs text-slate-500 mb-1">Type</label>
+          <label className="mb-1 block text-xs font-medium text-slate-600">Type</label>
           <select
-            className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
             value={filters.type}
             onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value }))}
           >
@@ -48,19 +51,19 @@ export default function Resources() {
           </select>
         </div>
         <div>
-          <label className="block text-xs text-slate-500 mb-1">Min capacity</label>
+          <label className="mb-1 block text-xs font-medium text-slate-600">Min capacity</label>
           <input
             type="number"
             min="0"
-            className="w-28 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+            className="w-28 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-all hover:border-slate-400"
             value={filters.minCapacity}
             onChange={(e) => setFilters((f) => ({ ...f, minCapacity: e.target.value }))}
           />
         </div>
         <div>
-          <label className="block text-xs text-slate-500 mb-1">Location contains</label>
+          <label className="mb-1 block text-xs font-medium text-slate-600">Location contains</label>
           <input
-            className="w-48 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+            className="w-48 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-all hover:border-slate-400"
             value={filters.location}
             onChange={(e) => setFilters((f) => ({ ...f, location: e.target.value }))}
             placeholder="Building…"
@@ -69,38 +72,44 @@ export default function Resources() {
         <button
           type="button"
           onClick={load}
-          className="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-sm font-medium text-white"
+          className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-500/20 hover:from-blue-700 hover:to-blue-800 transition-all active:scale-[0.98]"
         >
           Search
         </button>
       </div>
       {loading && <p className="text-slate-500">Loading…</p>}
-      {error && <p className="text-red-400">{error}</p>}
+      {error && <p className="text-red-700">{error}</p>}
       <div className="space-y-3">
         {list.map((r) => (
           <div
             key={r.id}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
           >
             <div>
-              <h2 className="font-semibold text-white">{r.name}</h2>
-              <p className="text-slate-500 text-sm">
+              <h2 className="font-bold text-slate-900">{r.name}</h2>
+              <p className="text-sm text-slate-600">
                 {r.type} · {r.location} · capacity {r.capacity ?? '—'} ·{' '}
                 <span
                   className={
-                    r.status === 'AVAILABLE' ? 'text-emerald-400' : 'text-amber-400'
+                    r.status === 'AVAILABLE' ? 'font-medium text-emerald-700' : 'font-medium text-amber-700'
                   }
                 >
                   {r.status}
                 </span>
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Link
+                to={`/resources/${r.id}/schedule`}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-1.5 text-sm font-medium text-slate-700 no-underline hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all"
+              >
+                Schedule
+              </Link>
               {r.type === 'AUDITORIUM' && (
                 <Link
                   to={`/auditorium/${r.id}`}
                   state={{ resourceName: r.name }}
-                  className="px-3 py-1.5 rounded-lg bg-violet-600/80 hover:bg-violet-500 text-sm text-white"
+                  className="rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-1.5 text-sm font-medium text-white no-underline shadow-sm hover:from-violet-700 hover:to-purple-700 transition-all"
                 >
                   Seat map
                 </Link>
@@ -108,7 +117,7 @@ export default function Resources() {
               <Link
                 to="/bookings"
                 state={{ preselectResourceId: r.id }}
-                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm text-white border border-slate-600"
+                className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-1.5 text-sm font-medium text-white no-underline shadow-sm hover:from-blue-700 hover:to-blue-800 transition-all"
               >
                 Book
               </Link>

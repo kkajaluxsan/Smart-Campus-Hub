@@ -4,6 +4,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { useLocation } from 'react-router-dom';
 import { bookings, resources, seats } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import { formatDepartment } from '../constants/studentProfile';
 import SeatGrid from '../components/SeatGrid';
 import {
   getBookingTimeErrors,
@@ -41,11 +42,11 @@ const DateTimeField = forwardRef(function DateTimeField(
         disabled={disabled}
         aria-invalid={invalid || undefined}
         {...rest}
-        className={`w-full rounded-lg border bg-slate-950 px-3 py-2 pr-10 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-600/50 disabled:cursor-not-allowed disabled:opacity-50 ${
-          invalid ? 'border-red-500/70' : 'border-slate-700'
+        className={`w-full rounded-xl border bg-white px-3.5 py-2.5 pr-10 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-slate-400 ${
+          invalid ? 'border-red-400' : 'border-slate-200'
         } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
       />
-      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">
+      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
         <CalendarIcon />
       </span>
     </div>
@@ -67,7 +68,10 @@ export default function BookingsPage() {
     endTime: '',
     purpose: '',
     attendees: '',
+    recurrence: 'NONE',
+    recurrenceOccurrences: 2,
   });
+  const [successMsg, setSuccessMsg] = useState('');
   const [seatRows, setSeatRows] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [loadingSeats, setLoadingSeats] = useState(false);
@@ -93,6 +97,15 @@ export default function BookingsPage() {
         const pre = location.state?.preselectResourceId;
         if (pre) {
           setForm((f) => ({ ...f, resourceId: String(pre) }));
+        }
+        const slotStart = location.state?.slotStart;
+        const slotEnd = location.state?.slotEnd;
+        if (slotStart && slotEnd) {
+          setForm((f) => ({
+            ...f,
+            startTime: toLocalDatetimeLocalValue(new Date(slotStart)),
+            endTime: toLocalDatetimeLocalValue(new Date(slotEnd)),
+          }));
         }
       } catch (e) {
         if (!cancelled) setError(e.response?.data?.message || e.message);
@@ -206,11 +219,15 @@ export default function BookingsPage() {
   const submitBooking = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMsg('');
     const te = getBookingTimeErrors(form.startTime, form.endTime);
     if (te.start || te.end) {
       return;
     }
     try {
+      const rec = form.recurrence === 'NONE' ? undefined : form.recurrence;
+      const occ =
+        form.recurrence === 'NONE' ? undefined : Math.min(26, Math.max(2, Number(form.recurrenceOccurrences) || 2));
       const body = {
         resourceId: Number(form.resourceId),
         startTime: localToApi(form.startTime),
@@ -218,14 +235,20 @@ export default function BookingsPage() {
         purpose: form.purpose || undefined,
         attendees: isAuditorium ? selectedSeats.length : Number(form.attendees),
         seatIds: isAuditorium ? selectedSeats : undefined,
+        recurrence: rec,
+        recurrenceOccurrences: occ,
       };
-      await bookings.create(body);
+      const { data } = await bookings.create(body);
+      const created = Array.isArray(data) ? data : [data];
+      setSuccessMsg(`Successfully created ${created.length} booking request(s).`);
       setForm({
         resourceId: '',
         startTime: '',
         endTime: '',
         purpose: '',
         attendees: '',
+        recurrence: 'NONE',
+        recurrenceOccurrences: 2,
       });
       setSeatRows([]);
       setSelectedSeats([]);
@@ -264,17 +287,20 @@ export default function BookingsPage() {
   };
 
   return (
-    <div className="space-y-10">
-      <h1 className="text-2xl font-bold text-white">Bookings</h1>
+    <div className="space-y-10 animate-fade-in">
+      <div className="border-b border-slate-200/50 pb-6">
+        <h1 className="font-display text-4xl font-extrabold text-slate-900 tracking-tight">Bookings</h1>
+        <p className="mt-2 text-slate-500 font-medium">Request campus space. Auditoriums require seat selection.</p>
+      </div>
 
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">New booking</h2>
+      <section className="rounded-2xl border border-slate-200/60 bg-white p-8 shadow-sm hover:shadow-md transition-shadow">
+        <h2 className="text-xl font-display font-bold text-slate-900 mb-6">New booking</h2>
         <form onSubmit={submitBooking} className="space-y-4 max-w-xl">
           <div>
-            <label className="block text-xs text-slate-500 mb-1">Resource</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Resource</label>
             <select
               required
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-900 shadow-sm transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
               value={form.resourceId}
               onChange={(e) => {
                 setForm((f) => ({ ...f, resourceId: e.target.value }));
@@ -292,7 +318,7 @@ export default function BookingsPage() {
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-slate-500 mb-1" htmlFor="booking-start">
+              <label className="block text-xs font-medium text-slate-600 mb-1" htmlFor="booking-start">
                 Start
               </label>
               <DatePicker
@@ -315,13 +341,13 @@ export default function BookingsPage() {
                 }
               />
               {timeErrors.start ? (
-                <p className="mt-1 text-xs text-red-400">{timeErrors.start}</p>
+                <p className="mt-1 text-xs text-red-600">{timeErrors.start}</p>
               ) : (
                 <p className="mt-1 text-xs text-slate-500">Must be in the future.</p>
               )}
             </div>
             <div>
-              <label className="block text-xs text-slate-500 mb-1" htmlFor="booking-end">
+              <label className="block text-xs font-medium text-slate-600 mb-1" htmlFor="booking-end">
                 End
               </label>
               <DatePicker
@@ -347,7 +373,7 @@ export default function BookingsPage() {
                 }
               />
               {timeErrors.end ? (
-                <p className="mt-1 text-xs text-red-400">{timeErrors.end}</p>
+                <p className="mt-1 text-xs text-red-600">{timeErrors.end}</p>
               ) : (
                 <p className="mt-1 text-xs text-slate-500">
                   {form.startTime ? 'Must be after start.' : 'Pick start first, then end.'}
@@ -356,10 +382,39 @@ export default function BookingsPage() {
             </div>
           </div>
 
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Recurrence</label>
+              <select
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                value={form.recurrence}
+                onChange={(e) => setForm((f) => ({ ...f, recurrence: e.target.value }))}
+              >
+                <option value="NONE">Does not repeat</option>
+                <option value="WEEKLY">Weekly</option>
+                <option value="BIWEEKLY">Every two weeks</option>
+              </select>
+            </div>
+            {form.recurrence !== 'NONE' && (
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Number of occurrences</label>
+                <input
+                  type="number"
+                  min={2}
+                  max={26}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-900 shadow-sm transition-all hover:border-slate-400"
+                  value={form.recurrenceOccurrences}
+                  onChange={(e) => setForm((f) => ({ ...f, recurrenceOccurrences: e.target.value }))}
+                />
+                <p className="mt-1 text-xs text-slate-500">2–26 occurrences including the first date.</p>
+              </div>
+            )}
+          </div>
+
           {isAuditorium && (
-            <div className="rounded-xl border border-violet-500/30 bg-violet-950/20 p-4 space-y-4">
-              <p className="text-slate-300 text-sm leading-relaxed">
-                <strong className="text-violet-200">Auditorium booking:</strong> first choose{' '}
+            <div className="rounded-2xl border border-violet-200/60 bg-gradient-to-br from-violet-50 to-fuchsia-50/30 p-5 space-y-4">
+              <p className="text-slate-700 text-sm leading-relaxed">
+                <strong className="text-violet-900">Auditorium booking:</strong> first choose{' '}
                 <strong>Start</strong> and <strong>End</strong> above (must be in the future and end after start),
                 then click <strong>Load seat availability</strong>. The seat map appears below this button.
               </p>
@@ -373,30 +428,30 @@ export default function BookingsPage() {
                       ? 'Fix start/end validation above, or pick an auditorium resource'
                       : 'Load seats for the selected time range'
                   }
-                  className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-sm text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-sm font-medium text-white shadow-md shadow-violet-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                   {loadingSeats ? 'Loading seats…' : 'Load seat availability'}
                 </button>
-                <p className="text-slate-400 text-sm">
+                <p className="text-slate-600 text-sm">
                   Green = free · Red = taken · Yellow = your selection
                 </p>
               </div>
               {!canLoadSeats && (
-                <p className="text-amber-200/90 text-sm">
+                <p className="text-amber-900 text-sm">
                   Choose start and end with the calendars above (future start, end after start), then load seats.
                 </p>
               )}
               {seatRows.length > 0 && (
                 <>
                   <SeatGrid seats={seatRows} selectedIds={selectedSeats} onToggle={toggleSeat} />
-                  <div className="text-sm text-slate-300 border-t border-slate-700 pt-3">
+                  <div className="text-sm text-slate-700 border-t border-violet-200 pt-3">
                     <p>
                       <span className="text-slate-500">Resource:</span>{' '}
-                      <span className="text-white">{selectedResource?.name}</span>
+                      <span className="text-slate-900 font-medium">{selectedResource?.name}</span>
                     </p>
                     <p>
                       <span className="text-slate-500">Selected:</span>{' '}
-                      <span className="text-amber-300 font-mono">
+                      <span className="text-amber-800 font-mono">
                         {seatRows
                           .filter((s) => selectedSeats.includes(s.id))
                           .map((s) => s.seatLabel)
@@ -415,27 +470,32 @@ export default function BookingsPage() {
 
           {!isAuditorium && (
             <div>
-              <label className="block text-xs text-slate-500 mb-1">Attendees</label>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Attendees</label>
               <input
                 type="number"
                 min="1"
                 required={!isAuditorium}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-900 shadow-sm transition-all hover:border-slate-400"
                 value={form.attendees}
                 onChange={(e) => setForm((f) => ({ ...f, attendees: e.target.value }))}
               />
             </div>
           )}
           <div>
-            <label className="block text-xs text-slate-500 mb-1">Purpose</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Purpose</label>
             <textarea
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white min-h-[80px]"
+              className="min-h-[80px] w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-900 shadow-sm transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
               value={form.purpose}
               onChange={(e) => setForm((f) => ({ ...f, purpose: e.target.value }))}
             />
           </div>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+          {successMsg && (
+            <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+              {successMsg}
+            </p>
+          )}
+          {error && <p className="text-red-600 text-sm">{error}</p>}
 
           <button
             type="submit"
@@ -443,7 +503,7 @@ export default function BookingsPage() {
               Boolean(timeErrors.start || timeErrors.end) ||
               (isAuditorium && selectedSeats.length === 0)
             }
-            className="px-6 py-2.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium disabled:opacity-40"
+            className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 font-semibold text-white shadow-md shadow-blue-500/20 hover:from-blue-700 hover:to-blue-800 hover:shadow-lg disabled:opacity-40 transition-all active:scale-[0.98]"
           >
             Submit booking
           </button>
@@ -451,39 +511,46 @@ export default function BookingsPage() {
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold text-white mb-4">Your bookings</h2>
+        <h2 className="text-xl font-display font-bold text-slate-900 mb-5">Your bookings</h2>
         {loading && <p className="text-slate-500">Loading…</p>}
         <div className="space-y-3">
           {list.map((b) => (
             <div
               key={b.id}
-              className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 flex flex-wrap justify-between gap-3"
+              className="flex flex-wrap justify-between gap-3 rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
             >
               <div>
-                <p className="font-medium text-white">
+                <p className="font-medium text-slate-900">
                   {b.resourceName}{' '}
                   <span
-                    className={`text-xs px-2 py-0.5 rounded ${
+                    className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
                       b.status === 'APPROVED'
-                        ? 'bg-emerald-900/60 text-emerald-300'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
                         : b.status === 'PENDING'
-                          ? 'bg-amber-900/60 text-amber-200'
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200/60'
                           : b.status === 'REJECTED'
-                            ? 'bg-red-900/60 text-red-300'
-                            : 'bg-slate-800 text-slate-400'
+                            ? 'bg-rose-50 text-rose-700 border border-rose-200/60'
+                            : 'bg-slate-100 text-slate-600 border border-slate-200/60'
                     }`}
                   >
                     {b.status}
                   </span>
                 </p>
-                <p className="text-slate-500 text-sm">
+                <p className="text-slate-600 text-sm">
                   {b.startTime} → {b.endTime}
                 </p>
+                {user?.role === 'ADMIN' && (b.requesterStudentIndexNumber || b.requesterDepartment) && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    {[b.requesterStudentIndexNumber, b.requesterDepartment && formatDepartment(b.requesterDepartment)]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </p>
+                )}
                 {b.seatLabels?.length > 0 && (
-                  <p className="text-violet-300 text-sm mt-1">Seats: {b.seatLabels.join(', ')}</p>
+                  <p className="text-violet-800 text-sm mt-1">Seats: {b.seatLabels.join(', ')}</p>
                 )}
                 {b.adminReason && (
-                  <p className="text-slate-400 text-sm mt-1">Note: {b.adminReason}</p>
+                  <p className="text-slate-500 text-sm mt-1">Note: {b.adminReason}</p>
                 )}
               </div>
               <div className="flex flex-wrap gap-2">
@@ -492,14 +559,14 @@ export default function BookingsPage() {
                     <button
                       type="button"
                       onClick={() => approve(b.id)}
-                      className="px-3 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-sm text-white"
+                      className="rounded-xl bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 shadow-sm transition-all"
                     >
                       Approve
                     </button>
                     <button
                       type="button"
                       onClick={() => reject(b.id)}
-                      className="px-3 py-1 rounded-lg bg-red-800 hover:bg-red-700 text-sm text-white"
+                      className="rounded-xl bg-rose-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-rose-700 shadow-sm transition-all"
                     >
                       Reject
                     </button>
@@ -509,7 +576,7 @@ export default function BookingsPage() {
                   <button
                     type="button"
                     onClick={() => cancelBooking(b.id)}
-                    className="px-3 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm text-white"
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all"
                   >
                     Cancel
                   </button>

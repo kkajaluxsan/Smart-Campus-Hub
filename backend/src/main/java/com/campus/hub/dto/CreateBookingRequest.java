@@ -12,5 +12,9 @@ public record CreateBookingRequest(
         @NotNull LocalDateTime endTime,
         String purpose,
         Integer attendees,
-        @Size(max = 50) List<Long> seatIds
+        @Size(max = 50) List<Long> seatIds,
+        /** NONE, WEEKLY, or BIWEEKLY — omit or NONE for a single booking */
+        String recurrence,
+        /** Total occurrences including the first (2–26 when recurring) */
+        Integer recurrenceOccurrences
 ) {}

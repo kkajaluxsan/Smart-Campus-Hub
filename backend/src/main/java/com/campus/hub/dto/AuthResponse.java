@@ -7,5 +7,11 @@ public record AuthResponse(
         Long userId,
         String email,
         String fullName,
-        Role role
+        Role role,
+        String studentIndexNumber,
+        Integer academicYear,
+        Integer semester,
+        String department,
+        String authProvider,
+        boolean emailVerified
 ) {}
