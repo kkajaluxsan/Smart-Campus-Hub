@@ -1,0 +1,9 @@
+/frontend/.env
+/backend/target/
+/frontend/node_modules/
+/frontend/dist/
+*.log
+.idea/
+*.iml
+.DS_Store
+campus-hub-uploads/
