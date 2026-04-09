@@ -231,7 +231,9 @@ public class TicketService {
         List<AttachmentDto> attachments = attachmentRepository.findByTicketId(t.getId()).stream()
                 .map(this::toAttachmentDto)
                 .toList();
-        boolean open = t.getStatus() != TicketStatus.CLOSED && t.getStatus() != TicketStatus.RESOLVED;
+        boolean open = t.getStatus() != TicketStatus.CLOSED
+                && t.getStatus() != TicketStatus.RESOLVED
+                && t.getStatus() != TicketStatus.REJECTED;
         Instant sla = t.getSlaDueAt();
         boolean breached = open && sla != null && Instant.now().isAfter(sla);
         return new TicketDto(

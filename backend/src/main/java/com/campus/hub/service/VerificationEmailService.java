@@ -53,11 +53,11 @@ public class VerificationEmailService {
                 logFallbackLink(user.getEmail(), link);
             }
         } else {
-            log.info("Mail disabled — verification link for {}: {}", user.getEmail(), link);
+            log.debug("Mail disabled — verification email skipped for {}", user.getEmail());
         }
     }
 
     private void logFallbackLink(String email, String link) {
-        log.info("VERIFICATION LINK for {}: {}", email, link);
+        log.debug("VERIFICATION LINK for {} has been generated (token redacted from logs)", email);
     }
 }

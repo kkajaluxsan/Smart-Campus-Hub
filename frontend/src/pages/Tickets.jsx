@@ -315,7 +315,7 @@ export default function TicketsPage() {
               </button>
 
               {expanded === t.id && (
-                <div className="border-t border-slate-100 bg-slate-50/30 p-8 space-y-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="border-t border-slate-100 bg-slate-50/30 p-8 space-y-8 animate-slide-up">
                   <div className="grid gap-6 md:grid-cols-3">
                     <div className="md:col-span-2 space-y-4">
                       <div>

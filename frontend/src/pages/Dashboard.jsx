@@ -193,7 +193,7 @@ export default function Dashboard() {
                     <div key={b.id} className="group relative flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 transition-colors">
                       <div className="space-y-1">
                         <p className="font-bold text-slate-900">{b.resourceName}</p>
-                        <p className="text-xs font-medium text-slate-400">{b.startTime.split(' ')[0]} • {b.startTime.split(' ')[1]}</p>
+                        <p className="text-xs font-medium text-slate-400">{b.startTime.split('T')[0]} • {b.startTime.split('T')[1]?.slice(0, 5)}</p>
                       </div>
                       <Badge tone={b.status === 'APPROVED' ? 'success' : 'warning'}>
                         {b.status}

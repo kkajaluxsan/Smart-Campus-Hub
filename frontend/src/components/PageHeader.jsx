@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 import { cx } from '../theme/tokens';
 
-export default function PageHeader({ title, description, breadcrumbs = [], actions }) {
+export default function PageHeader({ title, description, breadcrumbs = [], actions, className }) {
   return (
-    <div className="mb-8 flex flex-col gap-4 border-b border-slate-200/50 pb-6 sm:flex-row sm:items-start sm:justify-between animate-fade-in">
+    <div className={cx("mb-8 flex flex-col gap-4 border-b border-slate-200/50 pb-6 sm:flex-row sm:items-start sm:justify-between animate-fade-in", className)}>
       <div>
         {breadcrumbs.length > 0 && (
           <nav className="mb-2 text-xs font-medium text-slate-500" aria-label="Breadcrumb">

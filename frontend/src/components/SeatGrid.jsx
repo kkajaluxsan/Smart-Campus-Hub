@@ -18,7 +18,7 @@ export default function SeatGrid({ seats, selectedIds, onToggle }) {
   }, [seats]);
 
   const pickBestAvailable = () => {
-    const first = seats.find((s) => s.availability !== 'BOOKED');
+    const first = seats.find((s) => s.availability === 'AVAILABLE');
     if (first && !selectedIds.includes(first.id)) onToggle(first.id);
   };
 
@@ -63,7 +63,7 @@ export default function SeatGrid({ seats, selectedIds, onToggle }) {
                 const booked = s.availability === 'BOOKED';
                 const selected = selectedIds.includes(s.id);
                 let cls =
-                  'seat-btn min-w-[2.75rem] h-9 px-2 border ';
+                  'min-w-[2.75rem] h-9 px-2 border rounded-lg transition-all duration-200 text-sm font-semibold ';
                 if (booked) {
                   cls += 'bg-rose-100 border-rose-200 text-rose-700 cursor-not-allowed opacity-70';
                 } else if (selected) {
