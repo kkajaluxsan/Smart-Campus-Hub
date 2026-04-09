@@ -63,15 +63,15 @@ export default function SeatGrid({ seats, selectedIds, onToggle }) {
                 const booked = s.availability === 'BOOKED';
                 const selected = selectedIds.includes(s.id);
                 let cls =
-                  'min-w-[2.75rem] h-9 px-2 border rounded-lg transition-all duration-200 text-sm font-semibold ';
+                  'min-w-[2.75rem] h-9 px-2 border rounded-lg transition-all duration-200 text-sm font-semibold';
                 if (booked) {
-                  cls += 'bg-rose-100 border-rose-200 text-rose-700 cursor-not-allowed opacity-70';
+                  cls += ' bg-rose-100 border-rose-200 text-rose-700 cursor-not-allowed opacity-70';
                 } else if (selected) {
                   cls +=
-                    'bg-amber-400 text-slate-900 border-amber-500 ring-2 ring-amber-200 scale-105 shadow-lg';
+                    ' bg-amber-400 text-slate-900 border-amber-500 ring-2 ring-amber-200 scale-105 shadow-lg';
                 } else {
                   cls +=
-                    'bg-emerald-500 border-emerald-400 text-white hover:bg-emerald-400 cursor-pointer shadow-sm';
+                    ' bg-emerald-500 border-emerald-400 text-white hover:bg-emerald-400 cursor-pointer shadow-sm';
                 }
                 return (
                   <button
