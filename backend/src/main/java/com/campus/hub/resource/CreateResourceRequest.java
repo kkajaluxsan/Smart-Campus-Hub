@@ -1,14 +1,13 @@
-package com.campus.hub.dto;
+package com.campus.hub.resource;
 
-import com.campus.hub.model.ResourceStatus;
-import com.campus.hub.model.ResourceType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 
 public record CreateResourceRequest(
         @NotBlank String name,
         @NotNull ResourceType type,
-        Integer capacity,
+        @PositiveOrZero Integer capacity,
         @NotBlank String location,
         @NotNull ResourceStatus status
 ) {}

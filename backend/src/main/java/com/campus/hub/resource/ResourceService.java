@@ -1,14 +1,11 @@
-package com.campus.hub.service;
+package com.campus.hub.resource;
 
-import com.campus.hub.dto.CreateResourceRequest;
-import com.campus.hub.dto.ResourceDto;
 import com.campus.hub.exception.ApiException;
-import com.campus.hub.model.CampusResource;
-import com.campus.hub.model.ResourceType;
-import com.campus.hub.repository.CampusResourceRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +21,16 @@ public class ResourceService {
     private final CampusResourceRepository resourceRepository;
 
     @Transactional(readOnly = true)
-    public List<ResourceDto> search(ResourceType type, Integer minCapacity, String location) {
+    public List<ResourceDto> search(
+            ResourceType type,
+            Integer minCapacity,
+            Integer maxCapacity,
+            String location,
+            ResourceStatus status,
+            String queryText,
+            String sortBy,
+            String sortDir
+    ) {
         Specification<CampusResource> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (type != null) {
@@ -33,15 +39,44 @@ public class ResourceService {
             if (minCapacity != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("capacity"), minCapacity));
             }
+            if (maxCapacity != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("capacity"), maxCapacity));
+            }
             if (StringUtils.hasText(location)) {
                 predicates.add(cb.like(cb.lower(root.get("location")), "%" + location.trim().toLowerCase() + "%"));
+            }
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (StringUtils.hasText(queryText)) {
+                String term = "%" + queryText.trim().toLowerCase() + "%";
+                predicates.add(
+                        cb.or(
+                                cb.like(cb.lower(root.get("name")), term),
+                                cb.like(cb.lower(root.get("location")), term)
+                        )
+                );
             }
             if (predicates.isEmpty()) {
                 return cb.conjunction();
             }
             return cb.and(predicates.toArray(Predicate[]::new));
         };
-        return resourceRepository.findAll(spec).stream().map(this::toDto).toList();
+        Sort sort = buildSort(sortBy, sortDir);
+        return resourceRepository.findAll(spec, sort).stream().map(this::toDto).toList();
+    }
+
+    private Sort buildSort(String sortBy, String sortDir) {
+        String property = switch (sortBy == null ? "" : sortBy.trim().toLowerCase()) {
+            case "capacity" -> "capacity";
+            case "location" -> "location";
+            case "type" -> "type";
+            case "status" -> "status";
+            case "name" -> "name";
+            default -> "name";
+        };
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        return Sort.by(direction, property);
     }
 
     @Transactional(readOnly = true)
@@ -79,7 +114,13 @@ public class ResourceService {
         if (!resourceRepository.existsById(id)) {
             throw new ApiException(HttpStatus.NOT_FOUND, "Resource not found");
         }
-        resourceRepository.deleteById(id);
+        try {
+            resourceRepository.deleteById(id);
+            resourceRepository.flush();
+        } catch (DataIntegrityViolationException ex) {
+            throw new ApiException(HttpStatus.CONFLICT,
+                    "Resource cannot be deleted because booking history exists for it");
+        }
     }
 
     private ResourceDto toDto(CampusResource r) {

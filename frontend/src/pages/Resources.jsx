@@ -23,7 +23,16 @@ export default function Resources() {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filters, setFilters] = useState({ type: '', minCapacity: '', location: '' });
+  const [filters, setFilters] = useState({
+    type: '',
+    status: '',
+    minCapacity: '',
+    maxCapacity: '',
+    location: '',
+    q: '',
+    sortBy: 'name',
+    sortDir: 'asc',
+  });
 
   const load = async () => {
     setLoading(true);
@@ -31,8 +40,13 @@ export default function Resources() {
     try {
       const params = {};
       if (filters.type) params.type = filters.type;
+      if (filters.status) params.status = filters.status;
       if (filters.minCapacity) params.minCapacity = Number(filters.minCapacity);
+      if (filters.maxCapacity) params.maxCapacity = Number(filters.maxCapacity);
       if (filters.location) params.location = filters.location;
+      if (filters.q) params.q = filters.q;
+      params.sortBy = filters.sortBy;
+      params.sortDir = filters.sortDir;
       const { data } = await resources.list(params);
       setList(data);
     } catch (e) {
@@ -76,7 +90,14 @@ export default function Resources() {
       <Card glass className="animate-slide-up">
         <CardContent className="p-6">
           <div className="flex flex-col lg:flex-row items-end gap-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 flex-1 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 flex-1 w-full">
+              <Input
+                label="Keyword"
+                placeholder="Name or location"
+                value={filters.q}
+                onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
+              />
+
               <div className="space-y-2">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Type</label>
                 <div className="relative group">
@@ -95,6 +116,23 @@ export default function Resources() {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Status</label>
+                <div className="relative group">
+                  <select
+                    className="w-full h-[46px] rounded-2xl border border-slate-100 bg-white/50 px-4 py-2 text-sm font-medium focus:ring-4 focus:ring-uni-blue/10 focus:border-uni-blue outline-none transition-all appearance-none hover:bg-white"
+                    value={filters.status}
+                    onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}
+                  >
+                    <option value="">Any Status</option>
+                    <option value="AVAILABLE">Available</option>
+                    <option value="MAINTENANCE">Maintenance</option>
+                    <option value="UNAVAILABLE">Unavailable</option>
+                  </select>
+                  <Filter className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none group-hover:text-uni-blue transition-colors" size={16} />
+                </div>
+              </div>
+
               <Input
                 label="Min Capacity"
                 type="number"
@@ -102,6 +140,15 @@ export default function Resources() {
                 placeholder="0"
                 value={filters.minCapacity}
                 onChange={(e) => setFilters((f) => ({ ...f, minCapacity: e.target.value }))}
+              />
+
+              <Input
+                label="Max Capacity"
+                type="number"
+                min="0"
+                placeholder="0"
+                value={filters.maxCapacity}
+                onChange={(e) => setFilters((f) => ({ ...f, maxCapacity: e.target.value }))}
               />
 
               <div className="relative group">
@@ -114,16 +161,64 @@ export default function Resources() {
                 />
                 <MapPin className="absolute left-3.5 top-[38px] text-slate-300 group-focus-within:text-uni-blue transition-colors pointer-events-none" size={16} />
               </div>
+
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Sort By</label>
+                <select
+                  className="w-full h-[46px] rounded-2xl border border-slate-100 bg-white/50 px-4 py-2 text-sm font-medium focus:ring-4 focus:ring-uni-blue/10 focus:border-uni-blue outline-none transition-all"
+                  value={filters.sortBy}
+                  onChange={(e) => setFilters((f) => ({ ...f, sortBy: e.target.value }))}
+                >
+                  <option value="name">Name</option>
+                  <option value="capacity">Capacity</option>
+                  <option value="location">Location</option>
+                  <option value="type">Type</option>
+                  <option value="status">Status</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Direction</label>
+                <select
+                  className="w-full h-[46px] rounded-2xl border border-slate-100 bg-white/50 px-4 py-2 text-sm font-medium focus:ring-4 focus:ring-uni-blue/10 focus:border-uni-blue outline-none transition-all"
+                  value={filters.sortDir}
+                  onChange={(e) => setFilters((f) => ({ ...f, sortDir: e.target.value }))}
+                >
+                  <option value="asc">Ascending</option>
+                  <option value="desc">Descending</option>
+                </select>
+              </div>
             </div>
 
-            <Button
-              type="button"
-              onClick={load}
-              className="h-[46px] min-w-[120px] w-full lg:w-auto"
-            >
-              <Search size={18} />
-              Search
-            </Button>
+            <div className="flex gap-3 w-full lg:w-auto">
+              <Button
+                type="button"
+                onClick={load}
+                className="h-[46px] min-w-[120px] w-full lg:w-auto"
+              >
+                <Search size={18} />
+                Search
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setFilters({
+                    type: '',
+                    status: '',
+                    minCapacity: '',
+                    maxCapacity: '',
+                    location: '',
+                    q: '',
+                    sortBy: 'name',
+                    sortDir: 'asc',
+                  });
+                }}
+                className="h-[46px] min-w-[120px] w-full lg:w-auto"
+              >
+                Reset
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

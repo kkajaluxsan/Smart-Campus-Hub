@@ -55,11 +55,11 @@ UI: `http://localhost:5173` — Vite proxies `/api` to `http://localhost:8080`.
 
 ### Demo accounts (seeded on first run)
 
-| Email | Password | Role |
-|--------|----------|------|
-| admin@campus.edu | admin123 | ADMIN |
-| tech@campus.edu | tech123 | TECHNICIAN |
-| user@campus.edu | user123 | USER |
+| Email            | Password | Role       |
+| ---------------- | -------- | ---------- |
+| admin@campus.edu | admin123 | ADMIN      |
+| tech@campus.edu  | tech123  | TECHNICIAN |
+| user@campus.edu  | user123  | USER       |
 
 Seeded resources include **Seminar Room 101**, **CS Lab 3**, and **Grand Auditorium** (40 seats: rows A–E × 8).
 
@@ -102,6 +102,15 @@ frontend/         Vite + React SPA
 database/         Reference SQL
 docs/             API notes & samples
 ```
+
+## Recommended Work Allocation (Individual Assessment)
+
+To make individual contribution visible during assessment, allocate modules clearly:
+
+- **Member 1**: Facilities catalogue + resource management endpoints.
+- **Member 2**: Booking workflow + conflict checking.
+- **Member 3**: Incident tickets + attachments + technician updates.
+- **Member 4**: Notifications + role management + OAuth integration improvements.
 
 ## Production notes
 

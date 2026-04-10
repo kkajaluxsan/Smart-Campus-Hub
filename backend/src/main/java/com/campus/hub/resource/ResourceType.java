@@ -1,4 +1,4 @@
-package com.campus.hub.model;
+package com.campus.hub.resource;
 
 public enum ResourceType {
     ROOM,

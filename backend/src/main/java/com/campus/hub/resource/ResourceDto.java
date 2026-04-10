@@ -1,7 +1,4 @@
-package com.campus.hub.dto;
-
-import com.campus.hub.model.ResourceStatus;
-import com.campus.hub.model.ResourceType;
+package com.campus.hub.resource;
 
 public record ResourceDto(
         Long id,

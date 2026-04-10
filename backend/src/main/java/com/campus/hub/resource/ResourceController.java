@@ -1,11 +1,7 @@
-package com.campus.hub.controller;
+package com.campus.hub.resource;
 
 import com.campus.hub.dto.BookingScheduleItemDto;
-import com.campus.hub.dto.CreateResourceRequest;
-import com.campus.hub.dto.ResourceDto;
-import com.campus.hub.model.ResourceType;
 import com.campus.hub.service.BookingService;
-import com.campus.hub.service.ResourceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,9 +23,14 @@ public class ResourceController {
     public List<ResourceDto> list(
             @RequestParam(required = false) ResourceType type,
             @RequestParam(required = false) Integer minCapacity,
-            @RequestParam(required = false) String location
+            @RequestParam(required = false) Integer maxCapacity,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) ResourceStatus status,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false, defaultValue = "name") String sortBy,
+            @RequestParam(required = false, defaultValue = "asc") String sortDir
     ) {
-        return resourceService.search(type, minCapacity, location);
+        return resourceService.search(type, minCapacity, maxCapacity, location, status, q, sortBy, sortDir);
     }
 
     @GetMapping("/{id}")

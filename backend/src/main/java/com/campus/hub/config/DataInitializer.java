@@ -1,13 +1,13 @@
 package com.campus.hub.config;
 
-import com.campus.hub.model.CampusResource;
 import com.campus.hub.model.Department;
-import com.campus.hub.model.ResourceStatus;
-import com.campus.hub.model.ResourceType;
 import com.campus.hub.model.Role;
 import com.campus.hub.model.Seat;
 import com.campus.hub.model.User;
-import com.campus.hub.repository.CampusResourceRepository;
+import com.campus.hub.resource.CampusResource;
+import com.campus.hub.resource.CampusResourceRepository;
+import com.campus.hub.resource.ResourceStatus;
+import com.campus.hub.resource.ResourceType;
 import com.campus.hub.repository.SeatRepository;
 import com.campus.hub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
