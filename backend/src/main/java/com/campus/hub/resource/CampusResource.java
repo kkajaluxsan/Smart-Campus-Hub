@@ -1,7 +1,8 @@
-package com.campus.hub.model;
+package com.campus.hub.resource;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.campus.hub.model.Seat;
 
 import java.util.ArrayList;
 import java.util.List;

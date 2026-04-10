@@ -1,7 +1,5 @@
-package com.campus.hub.repository;
+package com.campus.hub.resource;
 
-import com.campus.hub.model.CampusResource;
-import com.campus.hub.model.ResourceType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

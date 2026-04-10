@@ -1,5 +1,6 @@
 package com.campus.hub.model;
 
+import com.campus.hub.resource.CampusResource;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -4,6 +4,7 @@ import { resources, audit } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { 
   Plus, 
+  Pencil,
   Trash2, 
   History, 
   Settings, 
@@ -38,12 +39,26 @@ export default function AdminResourcesPage() {
     status: 'AVAILABLE',
   });
   const [formErrors, setFormErrors] = useState({});
+  const [editingId, setEditingId] = useState(null);
+  const [resourceFilters, setResourceFilters] = useState({
+    q: '',
+    type: '',
+    status: '',
+  });
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      const params = {
+        sortBy: 'name',
+        sortDir: 'asc',
+      };
+      if (resourceFilters.q) params.q = resourceFilters.q;
+      if (resourceFilters.type) params.type = resourceFilters.type;
+      if (resourceFilters.status) params.status = resourceFilters.status;
+
       const [{ data: r }, { data: a }] = await Promise.all([
-        resources.list({}),
+        resources.list(params),
         audit.list(),
       ]);
       setList(r);
@@ -53,7 +68,7 @@ export default function AdminResourcesPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [resourceFilters]);
 
   useEffect(() => {
     if (user?.role !== 'ADMIN') return;
@@ -83,14 +98,22 @@ export default function AdminResourcesPage() {
     if (!validateForm()) return;
 
     try {
-      await resources.create({
+      const payload = {
         name: form.name,
         type: form.type,
         capacity: form.capacity ? Number(form.capacity) : null,
         location: form.location,
         status: form.status,
-      });
-      setSuccessMsg('Resource created successfully.');
+      };
+
+      if (editingId) {
+        await resources.update(editingId, payload);
+        setSuccessMsg('Resource updated successfully.');
+      } else {
+        await resources.create(payload);
+        setSuccessMsg('Resource created successfully.');
+      }
+
       setForm({
         name: '',
         type: 'ROOM',
@@ -98,11 +121,37 @@ export default function AdminResourcesPage() {
         location: '',
         status: 'AVAILABLE',
       });
+      setEditingId(null);
       setFormErrors({});
       await load();
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     }
+  };
+
+  const beginEdit = (resource) => {
+    setEditingId(resource.id);
+    setForm({
+      name: resource.name || '',
+      type: resource.type || 'ROOM',
+      capacity: resource.capacity ?? '',
+      location: resource.location || '',
+      status: resource.status || 'AVAILABLE',
+    });
+    setFormErrors({});
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const resetEditor = () => {
+    setEditingId(null);
+    setForm({
+      name: '',
+      type: 'ROOM',
+      capacity: '',
+      location: '',
+      status: 'AVAILABLE',
+    });
+    setFormErrors({});
   };
 
   const remove = async (id) => {
@@ -131,11 +180,13 @@ export default function AdminResourcesPage() {
             <CardHeader>
               <div className="flex items-center gap-3 text-uni-blue mb-2">
                 <div className="bg-uni-blue/10 p-2.5 rounded-xl">
-                  <Plus size={20} />
+                  {editingId ? <Pencil size={20} /> : <Plus size={20} />}
                 </div>
-                <CardTitle className="text-xl">Create Resource</CardTitle>
+                <CardTitle className="text-xl">{editingId ? 'Edit Resource' : 'Create Resource'}</CardTitle>
               </div>
-              <CardDescription>Add new assets to the university database.</CardDescription>
+              <CardDescription>
+                {editingId ? 'Update resource details and save changes.' : 'Add new assets to the university database.'}
+              </CardDescription>
             </CardHeader>
             <CardContent className="pt-2">
               <form onSubmit={submit} className="space-y-5">
@@ -213,8 +264,13 @@ export default function AdminResourcesPage() {
                 </div>
 
                 <Button type="submit" className="w-full" size="lg">
-                  Register Resource
+                  {editingId ? 'Save Changes' : 'Register Resource'}
                 </Button>
+                {editingId && (
+                  <Button type="button" variant="secondary" className="w-full" size="lg" onClick={resetEditor}>
+                    Cancel Edit
+                  </Button>
+                )}
               </form>
             </CardContent>
           </Card>
@@ -232,6 +288,47 @@ export default function AdminResourcesPage() {
                 {list.length} Items
               </div>
             </div>
+
+            <Card className="mb-4">
+              <CardContent className="p-4 grid gap-3 md:grid-cols-4">
+                <Input
+                  label="Keyword"
+                  placeholder="Name or location"
+                  value={resourceFilters.q}
+                  onChange={(e) => setResourceFilters((f) => ({ ...f, q: e.target.value }))}
+                />
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Type</label>
+                  <select
+                    className="w-full rounded-2xl border border-slate-100 bg-white/50 px-4 py-3 text-sm font-medium focus:ring-4 focus:ring-uni-blue/10 focus:border-uni-blue outline-none transition-all"
+                    value={resourceFilters.type}
+                    onChange={(e) => setResourceFilters((f) => ({ ...f, type: e.target.value }))}
+                  >
+                    <option value="">Any Type</option>
+                    <option value="ROOM">Room</option>
+                    <option value="LAB">Lab</option>
+                    <option value="AUDITORIUM">Auditorium</option>
+                    <option value="EQUIPMENT">Equipment</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Status</label>
+                  <select
+                    className="w-full rounded-2xl border border-slate-100 bg-white/50 px-4 py-3 text-sm font-medium focus:ring-4 focus:ring-uni-blue/10 focus:border-uni-blue outline-none transition-all"
+                    value={resourceFilters.status}
+                    onChange={(e) => setResourceFilters((f) => ({ ...f, status: e.target.value }))}
+                  >
+                    <option value="">Any Status</option>
+                    <option value="AVAILABLE">Available</option>
+                    <option value="MAINTENANCE">Maintenance</option>
+                    <option value="UNAVAILABLE">Unavailable</option>
+                  </select>
+                </div>
+                <div className="flex items-end gap-2">
+                  <Button type="button" variant="secondary" className="w-full" onClick={load}>Apply</Button>
+                </div>
+              </CardContent>
+            </Card>
 
             {loading && list.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-4 bg-slate-50/50 rounded-[2.5rem] border border-dashed border-slate-200">
@@ -254,6 +351,14 @@ export default function AdminResourcesPage() {
                           </p>
                         </div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => beginEdit(r)}
+                        className="p-2 text-slate-300 hover:text-amber-500 hover:bg-amber-50 rounded-xl transition-all"
+                        title="Edit resource"
+                      >
+                        <Pencil size={18} />
+                      </button>
                       <button
                         type="button"
                         onClick={() => remove(r.id)}
