@@ -1,5 +1,6 @@
-package com.campus.hub.model;
+package com.campus.hub.notification;
 
+import com.campus.hub.model.User;
 import jakarta.persistence.*;
 import lombok.*;
 

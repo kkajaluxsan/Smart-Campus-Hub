@@ -3,8 +3,11 @@ package com.campus.hub.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.beans.TypeMismatchException;
+import org.springframework.core.convert.ConversionFailedException;
 import org.springframework.validation.FieldError;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +49,25 @@ public class GlobalExceptionHandler {
                 .timestamp(Instant.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .message("Invalid request body")
+                .build());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String param = ex.getName() != null ? ex.getName() : "parameter";
+        return ResponseEntity.badRequest().body(ErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message("Invalid value for query parameter '" + param + "'")
+                .build());
+    }
+
+    @ExceptionHandler({TypeMismatchException.class, ConversionFailedException.class})
+    public ResponseEntity<ErrorResponse> handleConversionFailure(Exception ex) {
+        return ResponseEntity.badRequest().body(ErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message("Invalid date/time query parameter")
                 .build());
     }
 

@@ -26,6 +26,17 @@ export default function Dashboard() {
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState('');
 
+  const firstName =
+    typeof user?.fullName === 'string' && user.fullName.trim()
+      ? user.fullName.trim().split(' ')[0]
+      : '';
+
+  const formatStartTime = (startTime) => {
+    if (!startTime || typeof startTime !== 'string') return 'Time unavailable';
+    const parts = startTime.split(' ');
+    return parts.length >= 2 ? `${parts[0]} • ${parts[1]}` : startTime;
+  };
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -88,7 +99,7 @@ export default function Dashboard() {
     <div className="space-y-10 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fade-in">
         <PageHeader
-          title={`Hello${user?.fullName ? `, ${user.fullName.split(' ')[0]}` : ''} 👋`}
+          title={`Hello${firstName ? `, ${firstName}` : ''} 👋`}
           description={roleLabel}
           className="mb-0"
         />
@@ -193,7 +204,7 @@ export default function Dashboard() {
                     <div key={b.id} className="group relative flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 transition-colors">
                       <div className="space-y-1">
                         <p className="font-bold text-slate-900">{b.resourceName}</p>
-                        <p className="text-xs font-medium text-slate-400">{b.startTime.split(' ')[0]} • {b.startTime.split(' ')[1]}</p>
+                        <p className="text-xs font-medium text-slate-400">{formatStartTime(b.startTime)}</p>
                       </div>
                       <Badge tone={b.status === 'APPROVED' ? 'success' : 'warning'}>
                         {b.status}

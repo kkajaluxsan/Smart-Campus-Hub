@@ -1,4 +1,4 @@
-package com.campus.hub.model;
+package com.campus.hub.notification;
 
 public enum NotificationType {
     BOOKING,

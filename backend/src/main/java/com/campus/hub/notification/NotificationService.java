@@ -1,11 +1,7 @@
-package com.campus.hub.service;
+package com.campus.hub.notification;
 
-import com.campus.hub.dto.NotificationDto;
 import com.campus.hub.exception.ApiException;
-import com.campus.hub.model.Notification;
-import com.campus.hub.model.NotificationType;
 import com.campus.hub.model.User;
-import com.campus.hub.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;

@@ -1,6 +1,5 @@
-package com.campus.hub.repository;
+package com.campus.hub.notification;
 
-import com.campus.hub.model.Notification;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

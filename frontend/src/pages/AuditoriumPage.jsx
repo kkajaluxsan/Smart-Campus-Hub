@@ -2,11 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams, useLocation } from 'react-router-dom';
 import { resources, seats } from '../api/api';
 import SeatGrid from '../components/SeatGrid';
-
-function localToApi(dtLocal) {
-  if (!dtLocal) return '';
-  return dtLocal.length === 16 ? `${dtLocal}:00` : dtLocal;
-}
+import { getBookingTimeErrors, localToApi } from '../utils/datetimeLocal';
 
 export default function AuditoriumPage() {
   const { resourceId } = useParams();
@@ -31,6 +27,12 @@ export default function AuditoriumPage() {
   }, [resourceId]);
 
   const loadSeats = async () => {
+    const timeErrors = getBookingTimeErrors(startTime, endTime);
+    if (timeErrors.start || timeErrors.end) {
+      setError(timeErrors.start || timeErrors.end);
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
