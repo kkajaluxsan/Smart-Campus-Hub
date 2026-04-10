@@ -10,7 +10,19 @@ export function parseLocalDatetime(s) {
   const mi = Number(tp[1]);
   const se = tp[2] != null ? Number(tp[2]) : 0;
   if ([y, mo, da, h, mi, se].some((x) => Number.isNaN(x))) return null;
-  return new Date(y, mo - 1, da, h, mi, se, 0);
+  const d = new Date(y, mo - 1, da, h, mi, se, 0);
+  // Reject impossible dates/times that JS would otherwise auto-normalize.
+  if (
+    d.getFullYear() !== y ||
+    d.getMonth() !== mo - 1 ||
+    d.getDate() !== da ||
+    d.getHours() !== h ||
+    d.getMinutes() !== mi ||
+    d.getSeconds() !== se
+  ) {
+    return null;
+  }
+  return d;
 }
 
 export function toLocalDatetimeLocalValue(d) {

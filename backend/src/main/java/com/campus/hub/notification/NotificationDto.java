@@ -1,6 +1,4 @@
-package com.campus.hub.dto;
-
-import com.campus.hub.model.NotificationType;
+package com.campus.hub.notification;
 
 import java.time.Instant;
 

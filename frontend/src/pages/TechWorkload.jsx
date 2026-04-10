@@ -56,6 +56,11 @@ export default function TechWorkload() {
     }
   };
 
+  const formatStatus = (status) => {
+    if (!status || typeof status !== 'string') return 'UNKNOWN';
+    return status.replace('_', ' ');
+  };
+
   return (
     <div className="space-y-10 animate-fade-in pb-12">
       <PageHeader
@@ -170,7 +175,7 @@ export default function TechWorkload() {
                     </Td>
                     <Td className="py-5">
                        <Badge tone={t.status === 'RESOLVED' || t.status === 'CLOSED' ? 'success' : 'warning'}>
-                         {t.status.replace('_', ' ')}
+                         {formatStatus(t.status)}
                        </Badge>
                     </Td>
                     <Td className="py-5 pr-8 text-right">

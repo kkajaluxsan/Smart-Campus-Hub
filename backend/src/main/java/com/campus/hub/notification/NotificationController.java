@@ -1,8 +1,6 @@
-package com.campus.hub.controller;
+package com.campus.hub.notification;
 
-import com.campus.hub.dto.NotificationDto;
 import com.campus.hub.service.CurrentUserService;
-import com.campus.hub.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;

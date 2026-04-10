@@ -3,6 +3,8 @@ package com.campus.hub.service;
 import com.campus.hub.dto.*;
 import com.campus.hub.exception.ApiException;
 import com.campus.hub.model.*;
+import com.campus.hub.notification.NotificationService;
+import com.campus.hub.notification.NotificationType;
 import com.campus.hub.repository.CommentRepository;
 import com.campus.hub.repository.TicketAttachmentRepository;
 import com.campus.hub.repository.TicketRepository;

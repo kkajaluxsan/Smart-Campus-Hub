@@ -195,6 +195,11 @@ export default function TicketsPage() {
     return parts[0].substring(0, 2).toUpperCase();
   };
 
+  const getUserLabel = (email) => {
+    if (!email || typeof email !== 'string') return 'unknown';
+    return email.split('@')[0] || 'unknown';
+  };
+
   return (
     <div className="space-y-10 animate-fade-in pb-12">
       <PageHeader
@@ -425,7 +430,7 @@ export default function TicketsPage() {
                                 className="w-full mt-2"
                                 onClick={() => assignTech(t.id)}
                                >
-                                <Users size={14} /> Assign Technician
+                                  <User size={14} /> Assign Technician
                                </Button>
                              )}
                           </div>
@@ -491,7 +496,7 @@ export default function TicketsPage() {
                            <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-2 group/comment hover:shadow-md transition-all">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                   <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{c.userEmail.split('@')[0]}</span>
+                                   <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{getUserLabel(c.userEmail)}</span>
                                    <span className="text-[10px] font-bold text-slate-400">• {new Date(c.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                                 </div>
                                 {c.userId === currentUser?.userId && (
